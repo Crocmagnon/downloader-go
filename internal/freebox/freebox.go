@@ -1,47 +1,12 @@
-/*
-Copyright © 2024 Gabriel Augendre <gabriel@augendre.info>
-*/
-package cmd
+package freebox
 
 import (
 	"fmt"
 	"github.com/playwright-community/playwright-go"
-	"github.com/spf13/viper"
 	"io"
-	"os"
-
-	"github.com/spf13/cobra"
 )
 
-var (
-	freeboxUsername string
-	freeboxPassword string
-)
-
-// freeboxCmd represents the freebox command
-var freeboxCmd = &cobra.Command{
-	Use:   "freebox",
-	Short: "Download latest Freebox invoice",
-	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := run(os.Stdout, os.Stderr, freeboxUsername, freeboxPassword, globalOutputDir, globalHeadless); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(freeboxCmd)
-
-	freeboxCmd.Flags().StringVarP(&freeboxUsername, "username", "u", "", "Username")
-	_ = freeboxCmd.MarkFlagRequired("username")
-	freeboxCmd.Flags().StringVarP(&freeboxPassword, "password", "p", "", "Password")
-	_ = freeboxCmd.MarkFlagRequired("password")
-	_ = viper.BindPFlags(freeboxCmd.Flags())
-}
-
-func run(stdout io.Writer, stderr io.Writer, username, password, dir string, headless bool) error {
+func Run(stdout io.Writer, stderr io.Writer, username, password, dir string, headless bool) error {
 	err := playwright.Install(&playwright.RunOptions{
 		Browsers: []string{"firefox"},
 		Stdout:   stdout,
