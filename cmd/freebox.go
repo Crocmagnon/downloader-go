@@ -1,34 +1,48 @@
-package main
+/*
+Copyright © 2024 Gabriel Augendre <gabriel@augendre.info>
+*/
+package cmd
 
 import (
-	"flag"
 	"fmt"
 	"github.com/playwright-community/playwright-go"
+	"github.com/spf13/viper"
 	"io"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	if err := run(os.Args[1:], os.Stdout, os.Stderr); err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+var (
+	freeboxUsername string
+	freeboxPassword string
+)
+
+// freeboxCmd represents the freebox command
+var freeboxCmd = &cobra.Command{
+	Use:   "freebox",
+	Short: "Download latest Freebox invoice",
+	Args:  cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := run(os.Stdout, os.Stderr, freeboxUsername, freeboxPassword, globalOutputDir, globalHeadless); err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	},
 }
 
-func run(args []string, stdout io.Writer, stderr io.Writer) error {
-	var (
-		identifier string
-		password   string
-		outputDir  string
-		headless   bool
-	)
+func init() {
+	rootCmd.AddCommand(freeboxCmd)
 
-	err := parseFlags(args, &identifier, &password, &outputDir, &headless)
-	if err != nil {
-		return err
-	}
+	freeboxCmd.Flags().StringVarP(&freeboxUsername, "username", "u", "", "Username")
+	_ = freeboxCmd.MarkFlagRequired("username")
+	freeboxCmd.Flags().StringVarP(&freeboxPassword, "password", "p", "", "Password")
+	_ = freeboxCmd.MarkFlagRequired("password")
+	_ = viper.BindPFlags(freeboxCmd.Flags())
+}
 
-	err = playwright.Install(&playwright.RunOptions{
+func run(stdout io.Writer, stderr io.Writer, username, password, dir string, headless bool) error {
+	err := playwright.Install(&playwright.RunOptions{
 		Browsers: []string{"firefox"},
 		Stdout:   stdout,
 		Stderr:   stderr,
@@ -67,23 +81,8 @@ func run(args []string, stdout io.Writer, stderr io.Writer) error {
 
 	defer page.Close()
 
-	if err := downloadFile(page, identifier, password, outputDir); err != nil {
+	if err := downloadFile(page, username, password, dir); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func parseFlags(args []string, identifier, password, outputDir *string, headless *bool) error {
-	flagset := flag.NewFlagSet("", flag.ExitOnError)
-	flagset.StringVar(identifier, "u", "", "Username")
-	flagset.StringVar(password, "p", "", "Password")
-	flagset.StringVar(outputDir, "o", "", "Output dir")
-	flagset.BoolVar(headless, "headless", false, "Headless mode")
-
-	err := flagset.Parse(args)
-	if err != nil {
-		return fmt.Errorf("parsing flags: %w", err)
 	}
 
 	return nil
