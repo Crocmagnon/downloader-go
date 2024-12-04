@@ -17,7 +17,7 @@ type FreeboxCmd struct {
 }
 
 func (r *FreeboxCmd) Run(ctx *Context) error {
-	return freebox.Run(os.Stdout, os.Stderr, r.Username, r.Password, ctx.OutputDir, ctx.Headless)
+	return freebox.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
 type Cli struct {
@@ -30,7 +30,6 @@ type Cli struct {
 func main() {
 	var cli Cli
 	ctx := kong.Parse(&cli)
-	// Call the Run() method of the selected parsed command.
 	err := ctx.Run(&Context{OutputDir: cli.OutputDir, Headless: cli.Headless})
 	ctx.FatalIfErrorf(err)
 }

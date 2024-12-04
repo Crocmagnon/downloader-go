@@ -2,55 +2,15 @@ package freebox
 
 import (
 	"fmt"
+	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/playwright-community/playwright-go"
 	"io"
 )
 
-func Run(stdout io.Writer, stderr io.Writer, username, password, dir string, headless bool) error {
-	err := playwright.Install(&playwright.RunOptions{
-		Browsers: []string{"firefox"},
-		Stdout:   stdout,
-		Stderr:   stderr,
+func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
+	return pw.Run(stdout, stderr, headless, func(page playwright.Page) error {
+		return downloadFile(page, username, password, dir)
 	})
-	if err != nil {
-		return fmt.Errorf("installing playwright: %w", err)
-	}
-
-	playw, err := playwright.Run()
-	if err != nil {
-		return fmt.Errorf("launching playwright: %w", err)
-	}
-
-	defer playw.Stop() //nolint:errcheck
-
-	browser, err := playw.Firefox.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(headless),
-	})
-	if err != nil {
-		return fmt.Errorf("launching Firefox: %w", err)
-	}
-
-	defer browser.Close()
-
-	context, err := browser.NewContext()
-	if err != nil {
-		return fmt.Errorf("creating context: %w", err)
-	}
-
-	defer context.Close()
-
-	page, err := context.NewPage()
-	if err != nil {
-		return fmt.Errorf("creating page: %w", err)
-	}
-
-	defer page.Close()
-
-	if err := downloadFile(page, username, password, dir); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func downloadFile(page playwright.Page, identifier, password, outputDir string) error {
