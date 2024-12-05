@@ -5,6 +5,7 @@ Download your invoices, bank statements, etc.
 Currently only supports the following:
 * Freebox latest invoice
 * Free mobile latest invoice
+* Eau du Grand Lyon latest invoice
 
 ## Usage
 
@@ -21,10 +22,13 @@ Flags:
 
 Commands:
   freebox --output-dir=STRING --username=STRING --password=STRING [flags]
-    Download latest Freebox invoice.
+    Download latest invoice from Freebox.
 
   free-mobile --output-dir=STRING --username=STRING --password=STRING [flags]
-    Download latest Free mobile invoice.
+    Download latest invoice from Free mobile.
+
+  eau-du-grand-lyon --output-dir=STRING --username=STRING --password=STRING [flags]
+    Download latest invoice from Eau du Grand Lyon.
 
 Run "downloader <command> --help" for more information on a command.
 ```

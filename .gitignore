@@ -3,3 +3,4 @@
 dist
 cookies.json
 screenshots
+.DS_Store
