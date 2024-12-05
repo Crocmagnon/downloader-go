@@ -1,3 +1,5 @@
 .idea
 *.pdf
 dist
+cookies.json
+screenshots
