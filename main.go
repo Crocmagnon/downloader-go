@@ -5,6 +5,7 @@ import (
 	"github.com/Crocmagnon/downloader-go/internal/freebox"
 	"github.com/Crocmagnon/downloader-go/internal/freemobile"
 	"github.com/Crocmagnon/downloader-go/internal/octopusenergyaddress"
+	"github.com/Crocmagnon/downloader-go/internal/shiva"
 	"github.com/alecthomas/kong"
 	"os"
 )
@@ -51,6 +52,15 @@ func (r *OctopusEnergyAddressCmd) Run(ctx *Context) error {
 	return octopusenergyaddress.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
+type ShivaCmd struct {
+	Username string `required:"" short:"u" help:"Shiva username"`
+	Password string `required:"" short:"p" help:"Shiva password"`
+}
+
+func (r *ShivaCmd) Run(ctx *Context) error {
+	return shiva.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
+}
+
 type Cli struct {
 	OutputDir     string `help:"Output directory." required:"" short:"o" type:"path"`
 	Headless      bool   `help:"Enable headless mode."`
@@ -60,6 +70,7 @@ type Cli struct {
 	FreeMobile           FreeMobileCmd           `cmd:"" help:"Download latest invoice from Free mobile."`
 	EauDuGrandLyon       EauDuGrandLyonCmd       `cmd:"" help:"Download latest invoice from Eau du Grand Lyon."`
 	OctopusEnergyAddress OctopusEnergyAddressCmd `cmd:"" help:"Download latest proof of address from Octopus Energy."`
+	Shiva                ShivaCmd                `cmd:"" help:"Download latest latest payslip from Shiva."`
 }
 
 func main() {

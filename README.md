@@ -6,6 +6,8 @@ Currently only supports the following:
 * Freebox latest invoice
 * Free mobile latest invoice
 * Eau du Grand Lyon latest invoice
+* Octopus Energy proof of address (non-functional)
+* Shiva latest payslip
 
 ## Usage
 
