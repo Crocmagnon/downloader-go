@@ -8,6 +8,7 @@ Currently only supports the following:
 * Eau du Grand Lyon latest invoice
 * Octopus Energy proof of address (non-functional)
 * Shiva latest payslip
+* LCL latest bank statement
 
 ## Usage
 
