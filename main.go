@@ -4,6 +4,7 @@ import (
 	"github.com/Crocmagnon/downloader-go/internal/eaudugrandlyon"
 	"github.com/Crocmagnon/downloader-go/internal/freebox"
 	"github.com/Crocmagnon/downloader-go/internal/freemobile"
+	"github.com/Crocmagnon/downloader-go/internal/octopusenergyaddress"
 	"github.com/alecthomas/kong"
 	"os"
 )
@@ -41,14 +42,24 @@ func (r *EauDuGrandLyonCmd) Run(ctx *Context) error {
 	return eaudugrandlyon.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
+type OctopusEnergyAddressCmd struct {
+	Username string `required:"" short:"u" help:"Octopus Energy username"`
+	Password string `required:"" short:"p" help:"Octopus Energy password"`
+}
+
+func (r *OctopusEnergyAddressCmd) Run(ctx *Context) error {
+	return octopusenergyaddress.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
+}
+
 type Cli struct {
 	OutputDir     string `help:"Output directory." required:"" short:"o" type:"path"`
 	Headless      bool   `help:"Enable headless mode."`
 	NoInteraction bool   `help:"Enable interaction-less mode. In this mode, if a user interaction is required, it will generate an error instead."`
 
-	Freebox        FreeboxCmd        `cmd:"" help:"Download latest invoice from Freebox."`
-	FreeMobile     FreeMobileCmd     `cmd:"" help:"Download latest invoice from Free mobile."`
-	EauDuGrandLyon EauDuGrandLyonCmd `cmd:"" help:"Download latest invoice from Eau du Grand Lyon."`
+	Freebox              FreeboxCmd              `cmd:"" help:"Download latest invoice from Freebox."`
+	FreeMobile           FreeMobileCmd           `cmd:"" help:"Download latest invoice from Free mobile."`
+	EauDuGrandLyon       EauDuGrandLyonCmd       `cmd:"" help:"Download latest invoice from Eau du Grand Lyon."`
+	OctopusEnergyAddress OctopusEnergyAddressCmd `cmd:"" help:"Download latest proof of address from Octopus Energy."`
 }
 
 func main() {

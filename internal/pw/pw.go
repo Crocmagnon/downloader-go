@@ -14,16 +14,17 @@ const cookieFileName = "cookies.json"
 
 // Run runs callback in a playwright context, handling resource (de)allocation.
 func Run(stdout, stderr io.Writer, headless bool, callback func(playwright.Page) error) error {
-	err := playwright.Install(&playwright.RunOptions{
+	options := &playwright.RunOptions{
 		Browsers: []string{"firefox"},
 		Stdout:   stdout,
 		Stderr:   stderr,
-	})
+	}
+	err := playwright.Install(options)
 	if err != nil {
 		return fmt.Errorf("installing playwright: %w", err)
 	}
 
-	playw, err := playwright.Run()
+	playw, err := playwright.Run(options)
 	if err != nil {
 		return fmt.Errorf("launching playwright: %w", err)
 	}
