@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Crocmagnon/downloader-go/internal/eaudugrandlyon"
 	"github.com/Crocmagnon/downloader-go/internal/freebox"
 	"github.com/Crocmagnon/downloader-go/internal/freemobile"
@@ -23,6 +24,7 @@ type FreeboxCmd struct {
 }
 
 func (r *FreeboxCmd) Run(ctx *Context) error {
+	fmt.Println("Running Freebox...")
 	return freebox.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
@@ -32,6 +34,7 @@ type FreeMobileCmd struct {
 }
 
 func (r *FreeMobileCmd) Run(ctx *Context) error {
+	fmt.Println("Running FreeMobile...")
 	return freemobile.Run(os.Stdout, os.Stderr, os.Stdin, ctx.Headless, r.Username, r.Password, ctx.OutputDir, ctx.NoInteraction)
 }
 
@@ -41,6 +44,7 @@ type EauDuGrandLyonCmd struct {
 }
 
 func (r *EauDuGrandLyonCmd) Run(ctx *Context) error {
+	fmt.Println("Running EauDuGrandLyon...")
 	return eaudugrandlyon.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
@@ -50,6 +54,7 @@ type OctopusEnergyAddressCmd struct {
 }
 
 func (r *OctopusEnergyAddressCmd) Run(ctx *Context) error {
+	fmt.Println("Running OctopusEnergyAddress...")
 	return octopusenergyaddress.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
@@ -59,6 +64,7 @@ type ShivaCmd struct {
 }
 
 func (r *ShivaCmd) Run(ctx *Context) error {
+	fmt.Println("Running Shiva...")
 	return shiva.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
@@ -68,6 +74,7 @@ type LCLCheckingCmd struct {
 }
 
 func (r *LCLCheckingCmd) Run(ctx *Context) error {
+	fmt.Println("Running LCLChecking...")
 	return lclchecking.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
