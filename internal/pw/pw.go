@@ -10,12 +10,19 @@ import (
 	"path/filepath"
 )
 
+type Browser int
+
+const (
+	BrowserChromium Browser = iota
+	BrowserFirefox
+)
+
 const cookieFileName = "cookies.json"
 
 // Run runs callback in a playwright context, handling resource (de)allocation.
-func Run(stdout, stderr io.Writer, headless bool, callback func(playwright.Page) error) error {
+func Run(stdout, stderr io.Writer, headless bool, brwsr Browser, callback func(playwright.Page) error) error {
 	options := &playwright.RunOptions{
-		Browsers: []string{"firefox"},
+		Browsers: []string{"firefox", "chromium"},
 		Stdout:   stdout,
 		Stderr:   stderr,
 	}
@@ -31,16 +38,27 @@ func Run(stdout, stderr io.Writer, headless bool, callback func(playwright.Page)
 
 	defer playw.Stop() //nolint:errcheck
 
-	browser, err := playw.Firefox.Launch(playwright.BrowserTypeLaunchOptions{
+	var browserType playwright.BrowserType
+
+	switch brwsr {
+	case BrowserChromium:
+		browserType = playw.Chromium
+	case BrowserFirefox:
+		browserType = playw.Firefox
+	default:
+		browserType = playw.Firefox
+	}
+
+	browser, err := browserType.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(headless),
 	})
 	if err != nil {
-		return fmt.Errorf("launching Firefox: %w", err)
+		return fmt.Errorf("launching browser: %w", err)
 	}
 
 	defer browser.Close()
 
-	context, err := browser.NewContext()
+	context, err := browser.NewContext(playwright.BrowserNewContextOptions{})
 	if err != nil {
 		return fmt.Errorf("creating context: %w", err)
 	}
@@ -142,4 +160,47 @@ func saveScreenshot(page playwright.Page, dir string) {
 
 	defer file.Close()
 	_, _ = file.Write(img)
+}
+
+func DownloadPDFPopup(page playwright.Page, outputDir string, url string, triggerPopup func() error) error {
+	err := page.Context().Route(url, func(route playwright.Route) {
+		resp, err := route.Fetch()
+		if err != nil {
+			return
+		}
+
+		headers := resp.Headers()
+		headers["content-disposition"] = `attachment;filename="file.pdf"`
+		_ = route.Fulfill(playwright.RouteFulfillOptions{
+			Response: resp,
+			Headers:  headers,
+		})
+	})
+	if err != nil {
+		return fmt.Errorf("setting up download route: %w", err)
+	}
+
+	popup, err := page.ExpectPopup(triggerPopup)
+	if err != nil {
+		return fmt.Errorf("opening popup: %w", err)
+	}
+
+	if err := Download(popup, outputDir, func() error { return nil }); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Download(page playwright.Page, outputDir string, trigger func() error) error {
+	download, err := page.ExpectDownload(trigger)
+	if err != nil {
+		return fmt.Errorf("downloading file: %w", err)
+	}
+
+	if err := download.SaveAs(outputDir + "/" + download.SuggestedFilename()); err != nil {
+		return fmt.Errorf("saving file: %w", err)
+	}
+
+	return nil
 }

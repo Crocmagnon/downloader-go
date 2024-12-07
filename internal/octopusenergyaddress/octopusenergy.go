@@ -9,7 +9,7 @@ import (
 )
 
 func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
-	return pw.Run(stdout, stderr, headless, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserChromium, func(page playwright.Page) error {
 		return downloadFile(page, username, password, dir)
 	})
 }
@@ -32,6 +32,12 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
+	reg := regexp.MustCompile(`^https://www\.octopusenergy\.fr/espace-client/comptes/.*/logements/.*$`)
+	err = page.WaitForURL(reg, playwright.PageWaitForURLOptions{Timeout: playwright.Float(5000)})
+	if nil == err {
+		return nil // already logged in
+	}
+
 	_ = page.Locator("#didomi-notice-disagree-button").Click()
 
 	if err := page.Locator("input[name=email]").Fill(identifier); err != nil {
@@ -46,7 +52,6 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("clicking login button: %w", err)
 	}
 
-	reg := regexp.MustCompile(`^https://www\.octopusenergy\.fr/espace-client/comptes/.*/logements/.*$`)
 	if err := page.WaitForURL(reg, playwright.PageWaitForURLOptions{Timeout: playwright.Float(5000)}); err != nil {
 		return fmt.Errorf("waiting for redirect: %w", err)
 	}
@@ -60,16 +65,7 @@ func downloadAndSave(page playwright.Page, outputDir string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
-	download, err := page.ExpectDownload(func() error {
+	return pw.DownloadPDFPopup(page, outputDir, "**/*.pdf*", func() error {
 		return page.Locator("button[type=submit]").First().Click()
 	})
-	if err != nil {
-		return fmt.Errorf("downloading file: %w", err)
-	}
-
-	if err := download.SaveAs(outputDir + "/" + download.SuggestedFilename()); err != nil {
-		return fmt.Errorf("saving download file: %w", err)
-	}
-
-	return nil
 }

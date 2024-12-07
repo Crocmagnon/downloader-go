@@ -8,7 +8,7 @@ import (
 )
 
 func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
-	return pw.Run(stdout, stderr, headless, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
 		return downloadFile(page, username, password, dir)
 	})
 }
@@ -31,7 +31,8 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
-	_ = page.Locator("#popin_tc_privacy_button_2").Click() // we don't care about this error
+	// we don't care about this error, if the privacy policy is not there no need to reject
+	_ = page.Locator("#popin_tc_privacy_button_2").Click(playwright.LocatorClickOptions{Timeout: playwright.Float(5000)})
 
 	if err := page.Locator("#identifier").Fill(identifier); err != nil {
 		return fmt.Errorf("typing identifier: %w", err)
@@ -64,16 +65,7 @@ func downloadAndSave(page playwright.Page, outputDir string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
-	download, err := page.ExpectDownload(func() error {
+	return pw.Download(page, outputDir, func() error {
 		return page.Locator("button.amount").First().Click()
 	})
-	if err != nil {
-		return fmt.Errorf("downloading file: %w", err)
-	}
-
-	if err := download.SaveAs(outputDir + "/" + download.SuggestedFilename()); err != nil {
-		return fmt.Errorf("saving download file: %w", err)
-	}
-
-	return nil
 }

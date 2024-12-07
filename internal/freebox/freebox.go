@@ -8,7 +8,7 @@ import (
 )
 
 func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
-	return pw.Run(stdout, stderr, headless, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
 		return downloadFile(page, username, password, dir)
 	})
 }
@@ -47,16 +47,7 @@ func login(page playwright.Page, identifier, password string) error {
 }
 
 func downloadAndSave(page playwright.Page, outputDir string) error {
-	download, err := page.ExpectDownload(func() error {
+	return pw.Download(page, outputDir, func() error {
 		return page.Locator("#widget_mesfactures .btn_download").First().Click()
 	})
-	if err != nil {
-		return fmt.Errorf("downloading file: %w", err)
-	}
-
-	if err := download.SaveAs(outputDir + "/" + download.SuggestedFilename()); err != nil {
-		return fmt.Errorf("saving download file: %w", err)
-	}
-
-	return nil
 }

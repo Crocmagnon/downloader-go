@@ -14,7 +14,7 @@ var (
 )
 
 func Run(stdout, stderr io.Writer, stdin io.Reader, headless bool, username, password, dir string, noInteraction bool) error {
-	return pw.Run(stdout, stderr, headless, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
 		return downloadFile(
 			page,
 			username,
@@ -130,16 +130,7 @@ func navigate(page playwright.Page) error {
 }
 
 func downloadAndSave(page playwright.Page, outputDir string) error {
-	download, err := page.ExpectDownload(func() error {
+	return pw.Download(page, outputDir, func() error {
 		return page.Locator("[download]").First().Click()
 	})
-	if err != nil {
-		return fmt.Errorf("downloading file: %w", err)
-	}
-
-	if err := download.SaveAs(outputDir + "/" + download.SuggestedFilename()); err != nil {
-		return fmt.Errorf("saving download file: %w", err)
-	}
-
-	return nil
 }
