@@ -162,7 +162,7 @@ func saveScreenshot(page playwright.Page, dir string) {
 	_, _ = file.Write(img)
 }
 
-func DownloadPDFPopup(page playwright.Page, outputDir string, url string, triggerPopup func() error) error {
+func DownloadPDFPopup(page playwright.Page, outputDir, url, filename string, triggerPopup func() error) error {
 	err := page.Context().Route(url, func(route playwright.Route) {
 		resp, err := route.Fetch()
 		if err != nil {
@@ -170,7 +170,7 @@ func DownloadPDFPopup(page playwright.Page, outputDir string, url string, trigge
 		}
 
 		headers := resp.Headers()
-		headers["content-disposition"] = `attachment;filename="file.pdf"`
+		headers["content-disposition"] = fmt.Sprintf(`attachment;filename="%s"`, filename)
 		_ = route.Fulfill(playwright.RouteFulfillOptions{
 			Response: resp,
 			Headers:  headers,
