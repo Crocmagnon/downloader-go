@@ -65,7 +65,7 @@ func downloadAndSave(page playwright.Page, outputDir string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
-	return pw.DownloadPDFPopup(page, outputDir, "**/*.pdf*", "justificatif-domicile.pdf", func() error {
+	return pw.DownloadPDFPopup(page, outputDir, "**/*.pdf*", "justificatif domicile.pdf", func() error {
 		return page.Locator("button[type=submit]").First().Click()
 	})
 }
