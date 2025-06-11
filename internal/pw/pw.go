@@ -56,14 +56,14 @@ func Run(stdout, stderr io.Writer, headless bool, brwsr Browser, callback func(p
 		return fmt.Errorf("launching browser: %w", err)
 	}
 
-	defer browser.Close()
+	defer browser.Close() //nolint:errcheck
 
 	context, err := browser.NewContext(playwright.BrowserNewContextOptions{})
 	if err != nil {
 		return fmt.Errorf("creating context: %w", err)
 	}
 
-	defer context.Close()
+	defer context.Close() //nolint:errcheck
 
 	if err := loadCookies(context, cookieFileName); err != nil {
 		_, _ = fmt.Fprintf(stderr, "failed to load cookies, continuing anyway: %v\n", err)
@@ -74,7 +74,7 @@ func Run(stdout, stderr io.Writer, headless bool, brwsr Browser, callback func(p
 		return fmt.Errorf("creating page: %w", err)
 	}
 
-	defer page.Close()
+	defer page.Close() //nolint:errcheck
 
 	if err := callback(page); err != nil {
 		saveScreenshot(page, "screenshots")
@@ -110,7 +110,7 @@ func saveCookies(context playwright.BrowserContext, filename string) error {
 		return fmt.Errorf("creating %s: %w", filename, err)
 	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	if _, err := file.Write(asJSON); err != nil {
 		return fmt.Errorf("writing cookies.json: %w", err)
@@ -125,7 +125,7 @@ func loadCookies(context playwright.BrowserContext, filename string) error {
 		return fmt.Errorf("opening %s: %w", filename, err)
 	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
@@ -158,7 +158,7 @@ func saveScreenshot(page playwright.Page, dir string) {
 		return
 	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 	_, _ = file.Write(img)
 }
 
