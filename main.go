@@ -7,6 +7,7 @@ import (
 	"github.com/Crocmagnon/downloader-go/internal/freemobile"
 	"github.com/Crocmagnon/downloader-go/internal/lclchecking"
 	"github.com/Crocmagnon/downloader-go/internal/octopusenergyaddress"
+	"github.com/Crocmagnon/downloader-go/internal/photos"
 	"github.com/Crocmagnon/downloader-go/internal/shiva"
 	"github.com/alecthomas/kong"
 	"os"
@@ -78,6 +79,14 @@ func (r *LCLCheckingCmd) Run(ctx *Context) error {
 	return lclchecking.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
+type PhotosCmd struct {
+}
+
+func (r *PhotosCmd) Run(ctx *Context) error {
+	fmt.Println("Running Photos...")
+	return photos.Run(os.Stdout, os.Stderr, ctx.Headless, ctx.OutputDir)
+}
+
 type Cli struct {
 	OutputDir     string `help:"Output directory." required:"" short:"o" type:"path"`
 	Headless      bool   `help:"Enable headless mode."`
@@ -89,6 +98,7 @@ type Cli struct {
 	OctopusEnergyAddress OctopusEnergyAddressCmd `cmd:"" help:"Download latest proof of address from Octopus Energy."`
 	Shiva                ShivaCmd                `cmd:"" help:"Download latest payslip from Shiva."`
 	LCLChecking          LCLCheckingCmd          `cmd:"" help:"Download latest bank statement from LCL."`
+	Photos               PhotosCmd               `cmd:"" help:"Download photos."`
 }
 
 func main() {
