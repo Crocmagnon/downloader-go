@@ -10,7 +10,7 @@ downloader: dist
 	go build -o ./dist/downloader .
 
 deploy: all
-	scp ./dist/downloader-linux-amd64 ubuntu:/mnt/data/paperless-ngx/downloader
+	scp ./dist/downloader-linux-amd64 vps-1:/mnt/data/paperless-ngx/downloader
 
 lint:
 	golangci-lint run --fix ./...
