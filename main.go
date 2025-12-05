@@ -28,6 +28,9 @@ type FreeboxCmd struct {
 }
 
 func (r *FreeboxCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running Freebox...")
 	return freebox.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
@@ -38,6 +41,9 @@ type FreeMobileCmd struct {
 }
 
 func (r *FreeMobileCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running FreeMobile...")
 	return freemobile.Run(os.Stdout, os.Stderr, os.Stdin, ctx.Headless, r.Username, r.Password, ctx.OutputDir, ctx.NoInteraction)
 }
@@ -48,6 +54,9 @@ type EauDuGrandLyonCmd struct {
 }
 
 func (r *EauDuGrandLyonCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running EauDuGrandLyon...")
 	return eaudugrandlyon.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
@@ -58,6 +67,9 @@ type OctopusEnergyAddressCmd struct {
 }
 
 func (r *OctopusEnergyAddressCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running OctopusEnergyAddress...")
 	return octopusenergyaddress.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
@@ -68,6 +80,9 @@ type ShivaCmd struct {
 }
 
 func (r *ShivaCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running Shiva...")
 	return shiva.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
@@ -78,6 +93,9 @@ type LCLCheckingCmd struct {
 }
 
 func (r *LCLCheckingCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running LCLChecking...")
 	return lclchecking.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
@@ -86,6 +104,9 @@ type PhotosCmd struct {
 }
 
 func (r *PhotosCmd) Run(ctx *Context) error {
+	if err := requireOutputDir(ctx); err != nil {
+		return err
+	}
 	fmt.Println("Running Photos...")
 	return photos.Run(os.Stdout, os.Stderr, ctx.Headless, ctx.OutputDir)
 }
@@ -125,12 +146,12 @@ func (v *VersionCmd) Run(_ *Context) error {
 	}
 
 	// Print version information
-	fmt.Fprintf(os.Stdout, "go: %s\ncommit: %s\ndate: %s\ndirty: %s\n", goVersion, gitCommit, buildDate, commitDirty)
+	fmt.Printf("go: %s\ncommit: %s\ndate: %s\ndirty: %s\n", goVersion, gitCommit, buildDate, commitDirty)
 	return nil
 }
 
 type Cli struct {
-	OutputDir     string `help:"Output directory." required:"" short:"o" type:"path"`
+	OutputDir     string `help:"Output directory." short:"o" type:"path"`
 	Headless      bool   `help:"Enable headless mode."`
 	NoInteraction bool   `help:"Enable interaction-less mode. In this mode, if a user interaction is required, it will generate an error instead."`
 
@@ -142,6 +163,13 @@ type Cli struct {
 	LCLChecking          LCLCheckingCmd          `cmd:"" help:"Download latest bank statement from LCL."`
 	Photos               PhotosCmd               `cmd:"" help:"Download photos."`
 	Version              VersionCmd              `cmd:"" help:"Print version information."`
+}
+
+func requireOutputDir(ctx *Context) error {
+	if ctx == nil || ctx.OutputDir == "" {
+		return fmt.Errorf("missing required --output-dir (-o): this command needs an output directory")
+	}
+	return nil
 }
 
 func main() {
