@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"runtime"
+	"runtime/debug"
+
 	"github.com/Crocmagnon/downloader-go/internal/eaudugrandlyon"
 	"github.com/Crocmagnon/downloader-go/internal/freebox"
 	"github.com/Crocmagnon/downloader-go/internal/freemobile"
@@ -10,7 +14,6 @@ import (
 	"github.com/Crocmagnon/downloader-go/internal/photos"
 	"github.com/Crocmagnon/downloader-go/internal/shiva"
 	"github.com/alecthomas/kong"
-	"os"
 )
 
 type Context struct {
@@ -87,6 +90,45 @@ func (r *PhotosCmd) Run(ctx *Context) error {
 	return photos.Run(os.Stdout, os.Stderr, ctx.Headless, ctx.OutputDir)
 }
 
+type VersionCmd struct{}
+
+func (v *VersionCmd) Run(_ *Context) error {
+	info, ok := debug.ReadBuildInfo()
+	var goVersion, gitCommit, buildDate, commitDirty string
+
+	if ok && info != nil {
+		goVersion = info.GoVersion
+		for _, s := range info.Settings {
+			switch s.Key {
+			case "vcs.revision":
+				gitCommit = s.Value
+			case "vcs.time":
+				buildDate = s.Value
+			case "vcs.modified":
+				// true if the VCS had local modifications at build time
+				commitDirty = s.Value
+			}
+		}
+	}
+
+	if goVersion == "" {
+		goVersion = runtime.Version()
+	}
+	if gitCommit == "" {
+		gitCommit = "unknown"
+	}
+	if buildDate == "" {
+		buildDate = "unknown"
+	}
+	if commitDirty == "" {
+		commitDirty = "unknown"
+	}
+
+	// Print version information
+	fmt.Fprintf(os.Stdout, "go: %s\ncommit: %s\ndate: %s\ndirty: %s\n", goVersion, gitCommit, buildDate, commitDirty)
+	return nil
+}
+
 type Cli struct {
 	OutputDir     string `help:"Output directory." required:"" short:"o" type:"path"`
 	Headless      bool   `help:"Enable headless mode."`
@@ -99,6 +141,7 @@ type Cli struct {
 	Shiva                ShivaCmd                `cmd:"" help:"Download latest payslip from Shiva."`
 	LCLChecking          LCLCheckingCmd          `cmd:"" help:"Download latest bank statement from LCL."`
 	Photos               PhotosCmd               `cmd:"" help:"Download photos."`
+	Version              VersionCmd              `cmd:"" help:"Print version information."`
 }
 
 func main() {
