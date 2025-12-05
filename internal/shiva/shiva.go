@@ -32,6 +32,14 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
+	if err := page.WaitForURL("https://connect.shiva.fr/Account/Login?*", playwright.PageWaitForURLOptions{Timeout: playwright.Float(5000)}); err != nil {
+		if page.URL() == "https://portail.shiva.fr/clients" {
+			return nil // already logged in
+		}
+
+		return fmt.Errorf("waiting for redirect to login page: %w", err)
+	}
+
 	if err := page.Locator("#identifiantCtrl").Fill(identifier); err != nil {
 		return fmt.Errorf("typing identifier: %w", err)
 	}
