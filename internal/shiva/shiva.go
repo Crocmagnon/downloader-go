@@ -2,9 +2,10 @@ package shiva
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/playwright-community/playwright-go"
-	"io"
 )
 
 func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
@@ -26,7 +27,7 @@ func downloadFile(page playwright.Page, identifier, password, outputDir string) 
 }
 
 func login(page playwright.Page, identifier, password string) error {
-	_, err := page.Goto("https://connect.shiva.fr/Account/Login")
+	_, err := page.Goto("https://portail.shiva.fr/clients")
 	if err != nil {
 		return fmt.Errorf("going to: %w", err)
 	}
