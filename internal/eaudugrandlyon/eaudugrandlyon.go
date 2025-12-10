@@ -1,14 +1,12 @@
 package eaudugrandlyon
 
 import (
-	"errors"
 	"fmt"
+	"io"
+
 	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/playwright-community/playwright-go"
-	"io"
 )
-
-var errNotImplemented = errors.New("not implemented")
 
 func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
 	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
@@ -59,9 +57,7 @@ func downloadAndSave(page playwright.Page, outputDir string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
-	return fmt.Errorf("%w: no invoice available when developing", errNotImplemented)
-
-	//return pw.Download(page, outputDir, func() error {
-	//	return page.Locator(".facture-access").First().Click()
-	//})
+	return pw.Download(page, outputDir, func() error {
+		return page.Locator("button[name=download]").First().Click()
+	})
 }
