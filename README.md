@@ -13,25 +13,40 @@ Currently only supports the following:
 ## Usage
 
 ```console
-$ ./downloader -h
-Usage: downloader --output-dir=STRING <command> [flags]
+Usage: downloader <command> [flags]
 
 Flags:
   -h, --help                 Show context-sensitive help.
   -o, --output-dir=STRING    Output directory.
       --headless             Enable headless mode.
-      --no-interaction       Enable interaction-less mode. In this mode, if a user interaction is required, it will generate
+      --no-interaction       Enable interaction-less mode. In this mode,
+                             if a user interaction is required, it will generate
                              an error instead.
 
 Commands:
-  freebox --output-dir=STRING --username=STRING --password=STRING [flags]
+  freebox --username=STRING --password=STRING [flags]
     Download latest invoice from Freebox.
 
-  free-mobile --output-dir=STRING --username=STRING --password=STRING [flags]
+  free-mobile --username=STRING --password=STRING [flags]
     Download latest invoice from Free mobile.
 
-  eau-du-grand-lyon --output-dir=STRING --username=STRING --password=STRING [flags]
+  eau-du-grand-lyon --username=STRING --password=STRING [flags]
     Download latest invoice from Eau du Grand Lyon.
+
+  octopus-energy-address --username=STRING --password=STRING [flags]
+    Download latest proof of address from Octopus Energy.
+
+  shiva --username=STRING --password=STRING [flags]
+    Download latest payslip from Shiva.
+
+  lcl-checking --username=STRING --password=STRING [flags]
+    Download latest bank statement from LCL.
+
+  photos [flags]
+    Download photos.
+
+  version [flags]
+    Print version information.
 
 Run "downloader <command> --help" for more information on a command.
 ```
