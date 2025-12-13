@@ -49,6 +49,11 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("clicking login button: %w", err)
 	}
 
+	err = page.WaitForURL("https://agence.eaudugrandlyon.com/#/tableau-de-bord")
+	if err != nil {
+		return fmt.Errorf("waiting for redirection: %w", err) // already logged in
+	}
+
 	return nil
 }
 
