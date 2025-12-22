@@ -3,9 +3,10 @@ package freemobile
 import (
 	"errors"
 	"fmt"
+	"io"
+
 	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/playwright-community/playwright-go"
-	"io"
 )
 
 var (
@@ -14,7 +15,7 @@ var (
 )
 
 func Run(stdout, stderr io.Writer, stdin io.Reader, headless bool, username, password, dir string, noInteraction bool) error {
-	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserDefault, func(page playwright.Page) error {
 		return downloadFile(
 			page,
 			username,

@@ -3,17 +3,18 @@ package photos
 import (
 	"context"
 	"fmt"
-	"github.com/Crocmagnon/downloader-go/internal/pw"
-	"github.com/carlmjohnson/requests"
-	"github.com/playwright-community/playwright-go"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Crocmagnon/downloader-go/internal/pw"
+	"github.com/carlmjohnson/requests"
+	"github.com/playwright-community/playwright-go"
 )
 
 func Run(stdout, stderr io.Writer, headless bool, dir string) error {
-	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserDefault, func(page playwright.Page) error {
 		return downloadFile(page, dir)
 	})
 }

@@ -4,10 +4,11 @@ package pw
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/playwright-community/playwright-go"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/playwright-community/playwright-go"
 )
 
 type Browser int
@@ -15,6 +16,7 @@ type Browser int
 const (
 	BrowserChromium Browser = iota
 	BrowserFirefox
+	BrowserDefault = BrowserChromium
 )
 
 const cookieFileName = "cookies.json"
@@ -22,13 +24,17 @@ const cookieFileName = "cookies.json"
 // Run runs callback in a playwright context, handling resource (de)allocation.
 func Run(stdout, stderr io.Writer, headless bool, brwsr Browser, callback func(playwright.Page) error) error {
 	options := &playwright.RunOptions{
-		Browsers: []string{"firefox", "chromium"},
-		Stdout:   stdout,
-		Stderr:   stderr,
+		DriverDirectory: os.Getenv("PLAYWRIGHT_DRIVER_PATH"),
+		Browsers:        []string{"firefox", "chromium"},
+		Stdout:          stdout,
+		Stderr:          stderr,
 	}
-	err := playwright.Install(options)
-	if err != nil {
-		return fmt.Errorf("installing playwright: %w", err)
+
+	if os.Getenv("PLAYWRIGHT_INSTALL") == "1" {
+		err := playwright.Install(options)
+		if err != nil {
+			return fmt.Errorf("installing playwright: %w", err)
+		}
 	}
 
 	playw, err := playwright.Run(options)
@@ -46,7 +52,7 @@ func Run(stdout, stderr io.Writer, headless bool, brwsr Browser, callback func(p
 	case BrowserFirefox:
 		browserType = playw.Firefox
 	default:
-		browserType = playw.Firefox
+		browserType = playw.Chromium
 	}
 
 	browser, err := browserType.Launch(playwright.BrowserTypeLaunchOptions{

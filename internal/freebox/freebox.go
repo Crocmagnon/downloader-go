@@ -2,13 +2,14 @@ package freebox
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/playwright-community/playwright-go"
-	"io"
 )
 
 func Run(stdout, stderr io.Writer, headless bool, username, password, dir string) error {
-	return pw.Run(stdout, stderr, headless, pw.BrowserFirefox, func(page playwright.Page) error {
+	return pw.Run(stdout, stderr, headless, pw.BrowserDefault, func(page playwright.Page) error {
 		return downloadFile(page, username, password, dir)
 	})
 }

@@ -1,6 +1,3 @@
-[tools]
-golangci-lint = "latest"
-
 [tasks.build]
 description = "Build downloader binaries into dist/"
 run = [
