@@ -17,11 +17,6 @@ description = "Run unit tests"
 run = "go test ./..."
 sources = ["**/*.go", "go.mod", "go.sum"]
 
-[tasks.deploy]
-description = "Deploy downloader to vps-2"
-depends = ["build"]
-run = "scp ./dist/downloader vps-2:deploy/paperless-ngx/downloader"
-
 [tasks.all]
 description = "Run tests, lint, then build"
 depends = ["test", "lint", "build"]
