@@ -48,6 +48,24 @@ func login(page playwright.Page, identifier, password string) error {
 }
 
 func downloadAndSave(page playwright.Page, outputDir string) error {
+	err := page.Context().Route("https://adsl.free.fr/facture_pdf.pl*", func(route playwright.Route) {
+		resp, err := route.Fetch()
+		if err != nil {
+			_ = route.Continue()
+			return
+		}
+
+		headers := resp.Headers()
+		headers["content-disposition"] = `attachment;filename="facture_freebox.pdf"`
+		_ = route.Fulfill(playwright.RouteFulfillOptions{
+			Response: resp,
+			Headers:  headers,
+		})
+	})
+	if err != nil {
+		return fmt.Errorf("setting up download route: %w", err)
+	}
+
 	return pw.Download(page, outputDir, func() error {
 		return page.Locator("#widget_mesfactures .btn_download").First().Click()
 	})
