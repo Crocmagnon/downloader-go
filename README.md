@@ -50,3 +50,7 @@ Commands:
 
 Run "downloader <command> --help" for more information on a command.
 ```
+
+## Development
+
+When updating go dependencies, remember to bump the vendorHash in flake.nix.

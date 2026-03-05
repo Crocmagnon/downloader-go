@@ -3,7 +3,7 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-25.11";
   # nixpkgs is pinned for playwright-driver so we have the proper version
-  inputs.nixpkgs-pw.url = "github:NixOS/nixpkgs/979daf34c8cacebcd917d540070b52a3c2b9b16e";
+  inputs.nixpkgs-pw.url = "github:NixOS/nixpkgs/80bdc1e5ce51f56b19791b52b2901187931f5353";
 
   outputs =
     {
@@ -56,7 +56,7 @@
             # remember to bump this hash when your dependencies change.
             # vendorHash = pkgs.lib.fakeHash;
 
-            vendorHash = "sha256-6n0QsQVxZXD33wMIxbgnduoQiW+elvIUYnCWhCRmQl4=";
+            vendorHash = "sha256-fo+hkarvJVMZF5ijs+IuxMYTgT8+CZSWTjsWlXMHXVk=";
 
             nativeBuildInputs = [ pkgs.makeWrapper ];
 

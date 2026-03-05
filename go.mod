@@ -3,9 +3,9 @@ module github.com/Crocmagnon/downloader-go
 go 1.25.5
 
 require (
-	github.com/alecthomas/kong v1.13.0
+	github.com/alecthomas/kong v1.14.0
 	github.com/carlmjohnson/requests v0.25.1
-	github.com/playwright-community/playwright-go v0.5200.1
+	github.com/playwright-community/playwright-go v0.5700.1
 )
 
 require (
@@ -15,5 +15,5 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 )
