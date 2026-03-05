@@ -57,6 +57,18 @@
             # vendorHash = pkgs.lib.fakeHash;
 
             vendorHash = "sha256-6n0QsQVxZXD33wMIxbgnduoQiW+elvIUYnCWhCRmQl4=";
+
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+
+            postInstall = ''
+              mkdir -p $out/share/playwright/package
+              ln -s ${pkgs.playwright-driver}/cli.js $out/share/playwright/package/cli.js
+
+              wrapProgram $out/bin/downloader-go \
+                --set PLAYWRIGHT_BROWSERS_PATH "${pkgs.playwright-driver.browsers}" \
+                --set PLAYWRIGHT_DRIVER_PATH "$out/share/playwright" \
+                --set PLAYWRIGHT_NODEJS_PATH "${pkgs.nodejs}/bin/node"
+            '';
           };
         }
       );
