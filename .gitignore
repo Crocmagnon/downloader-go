@@ -5,3 +5,4 @@ cookies.json
 screenshots
 .DS_Store
 result
+.playwright

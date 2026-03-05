@@ -2,16 +2,13 @@
   description = "A simple Go package";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-25.11";
-  inputs.playwright = {
-    url = "github:pietdevries94/playwright-web-flake/1.52.0";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
+  inputs.nixpkgs-pw.url = "github:NixOS/nixpkgs/979daf34c8cacebcd917d540070b52a3c2b9b16e";
 
   outputs =
     {
       self,
       nixpkgs,
-      playwright,
+      nixpkgs-pw,
     }:
     let
       version = "latest";
@@ -28,7 +25,7 @@
           inherit system;
           overlays = [
             (final: prev: {
-              inherit (playwright.packages.${system}) playwright-driver;
+              inherit (nixpkgs-pw.legacyPackages.${system}) playwright-driver;
             })
           ];
         }
@@ -77,8 +74,10 @@
             ];
             shellHook = ''
               export PLAYWRIGHT_BROWSERS_PATH="${pkgs.playwright-driver.browsers}"
-              export PLAYWRIGHT_DRIVER_PATH="${pkgs.playwright-driver}"
+              export PLAYWRIGHT_DRIVER_PATH="$PWD/.playwright"
               export PLAYWRIGHT_NODEJS_PATH="${pkgs.nodejs}/bin/node"
+              mkdir -p "$PLAYWRIGHT_DRIVER_PATH/package"
+              ln -sf "${pkgs.playwright-driver}/cli.js" "$PLAYWRIGHT_DRIVER_PATH/package/cli.js"
             '';
           };
         }
