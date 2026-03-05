@@ -2,6 +2,7 @@
   description = "A simple Go package";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-25.11";
+  # nixpkgs is pinned for playwright-driver so we have the proper version
   inputs.nixpkgs-pw.url = "github:NixOS/nixpkgs/979daf34c8cacebcd917d540070b52a3c2b9b16e";
 
   outputs =
