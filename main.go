@@ -101,6 +101,7 @@ func (r *LCLCheckingCmd) Run(ctx *Context) error {
 }
 
 type PhotosCmd struct {
+	URL string `required:"" short:"u" help:"Photo library URL"`
 }
 
 func (r *PhotosCmd) Run(ctx *Context) error {
@@ -108,7 +109,7 @@ func (r *PhotosCmd) Run(ctx *Context) error {
 		return err
 	}
 	fmt.Println("Running Photos...")
-	return photos.Run(os.Stdout, os.Stderr, ctx.Headless, ctx.OutputDir)
+	return photos.Run(os.Stdout, os.Stderr, ctx.Headless, r.URL, ctx.OutputDir)
 }
 
 type VersionCmd struct{}

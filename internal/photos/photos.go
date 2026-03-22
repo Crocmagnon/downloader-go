@@ -13,13 +13,18 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func Run(stdout, stderr io.Writer, headless bool, dir string) error {
+func Run(stdout, stderr io.Writer, headless bool, url, dir string) error {
 	return pw.Run(stdout, stderr, headless, pw.BrowserDefault, func(page playwright.Page) error {
-		return downloadFile(page, dir)
+		return downloadFile(page, url, dir)
 	})
 }
 
-func downloadFile(page playwright.Page, outputDir string) error {
+func downloadFile(page playwright.Page, url, outputDir string) error {
+	_, err := page.Goto(url)
+	if err != nil {
+		return fmt.Errorf("going to: %w", err)
+	}
+
 	if err := downloadAndSave(page, outputDir); err != nil {
 		return fmt.Errorf("downloading and saving: %w", err)
 	}
@@ -28,11 +33,6 @@ func downloadFile(page playwright.Page, outputDir string) error {
 }
 
 func downloadAndSave(page playwright.Page, outputDir string) error {
-	_, err := page.Goto("https://lumys-photo-library.example.com")
-	if err != nil {
-		return fmt.Errorf("going to: %w", err)
-	}
-
 	if err := page.Locator("img").First().Click(); err != nil {
 		return fmt.Errorf("clicking on first img: %w", err)
 	}
