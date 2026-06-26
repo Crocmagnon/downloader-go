@@ -66,7 +66,13 @@ func downloadAndSave(page playwright.Page, outputDir string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
+	if err := page.Locator("button.amount").First().Click(); err != nil {
+		return fmt.Errorf("clicking preview button: %w", err)
+	}
+
+	frame := page.FrameLocator("iframe")
+
 	return pw.Download(page, outputDir, func() error {
-		return page.Locator("button.amount").First().Click()
+		return frame.Locator("button#download").First().Click()
 	})
 }
