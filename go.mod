@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	github.com/alecthomas/kong v1.14.0
 	github.com/carlmjohnson/requests v0.25.1
-	github.com/playwright-community/playwright-go v0.6000.0
+	github.com/mxschmitt/playwright-go v0.6100.0
 )
 
 require (

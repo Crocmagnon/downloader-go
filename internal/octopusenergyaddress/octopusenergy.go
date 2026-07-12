@@ -3,7 +3,7 @@ package octopusenergyaddress
 import (
 	"fmt"
 	"github.com/Crocmagnon/downloader-go/internal/pw"
-	"github.com/playwright-community/playwright-go"
+	"github.com/mxschmitt/playwright-go"
 	"io"
 	"regexp"
 )

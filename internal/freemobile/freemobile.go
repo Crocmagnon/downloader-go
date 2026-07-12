@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/Crocmagnon/downloader-go/internal/pw"
-	"github.com/playwright-community/playwright-go"
+	"github.com/mxschmitt/playwright-go"
 )
 
 var (

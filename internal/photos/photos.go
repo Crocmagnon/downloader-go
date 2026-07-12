@@ -10,7 +10,7 @@ import (
 
 	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/carlmjohnson/requests"
-	"github.com/playwright-community/playwright-go"
+	"github.com/mxschmitt/playwright-go"
 )
 
 func Run(stdout, stderr io.Writer, headless bool, url, dir string) error {

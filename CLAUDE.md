@@ -84,7 +84,7 @@ Current providers:
 - `photos`: Photo downloads (no credentials required)
 
 ## Key Dependencies
-- `playwright-community/playwright-go`: Browser automation
+- `mxschmitt/playwright-go`: Browser automation
 - `alecthomas/kong`: CLI argument parsing
 - `carlmjohnson/requests`: HTTP client utilities
 
