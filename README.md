@@ -9,6 +9,7 @@ Currently only supports the following:
 * Octopus Energy proof of address (non-functional)
 * Shiva latest payslip
 * LCL latest bank statement
+* Recettes & Cabas weekly recap on Telegram, with a bot to change the selection
 
 ## Usage
 
@@ -60,3 +61,21 @@ Run "downloader <command> --help" for more information on a command.
 ## Development
 
 When updating go dependencies, remember to bump the vendorHash in flake.nix.
+
+### Secrets
+
+`mise.local.toml` holds the environment variables used for local runs (`RC_USERNAME`, `RC_PASSWORD`,
+`TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID`). It is encrypted with git-crypt; mise loads it once unlocked.
+
+### How to unlock?
+
+In Bitwarden, note "downloader-go git-crypt key base64".
+
+```fish
+read -s key # input bitwarden note content
+set tmp (mktemp)
+echo $key | base64 -d > $tmp
+git crypt unlock $tmp
+rm $tmp
+```
+

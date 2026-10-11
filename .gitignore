@@ -6,3 +6,5 @@ screenshots
 .DS_Store
 result
 .playwright
+# encrypted with git-crypt, see README
+!mise.local.toml
