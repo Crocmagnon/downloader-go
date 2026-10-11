@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -17,13 +18,18 @@ type tgCall struct {
 // fakeTelegram records every call and answers each with the given result JSON.
 func fakeTelegram(t *testing.T, result string) (Telegram, *[]tgCall) {
 	t.Helper()
-	var calls []tgCall
+	var (
+		mu    sync.Mutex // the "typing" indicator is sent from another goroutine
+		calls []tgCall
+	)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		method := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
 		if !strings.HasPrefix(r.URL.Path, "/botSECRET/") {
 			t.Errorf("unexpected path %q", r.URL.Path)
 		}
+		mu.Lock()
+		defer mu.Unlock()
 		calls = append(calls, tgCall{Method: method, Body: string(body)})
 		_, _ = io.WriteString(w, `{"ok":true,"result":`+result+`}`)
 	}))
@@ -78,6 +84,16 @@ func TestSetCommands(t *testing.T) {
 	}
 	c := (*calls)[0]
 	if c.Method != "setMyCommands" || !strings.Contains(c.Body, `"commands":[{"command":"recap","description":"Récap"}]`) {
+		t.Errorf("call = %+v", c)
+	}
+}
+
+func TestTyping(t *testing.T) {
+	tg, calls := fakeTelegram(t, `true`)
+	if err := tg.Typing(context.Background(), 42); err != nil {
+		t.Fatal(err)
+	}
+	if c := (*calls)[0]; c.Method != "sendChatAction" || !strings.Contains(c.Body, `"action":"typing"`) {
 		t.Errorf("call = %+v", c)
 	}
 }

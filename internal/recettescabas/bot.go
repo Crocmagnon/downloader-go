@@ -16,6 +16,8 @@ var ErrWeekChanged = errors.New("week changed")
 
 const maxFailRunes = 300
 
+const typingEvery = 4 * time.Second
+
 // Telegram albums hold 2 to 10 items.
 const (
 	minAlbum = 2
@@ -117,6 +119,9 @@ func (s Service) message(ctx context.Context, m *Message) {
 
 	switch cmd {
 	case "/recap":
+		stop := s.busy(ctx)
+		defer stop()
+
 		if err := s.SendRecap(ctx); err != nil {
 			s.fail(ctx, err)
 		}
@@ -137,6 +142,9 @@ func (s Service) detail(ctx context.Context, arg string) {
 		s.report(s.TG.Send(ctx, s.ChatID, "Usage : /detail N, par exemple /detail 6", nil))
 		return
 	}
+
+	stop := s.busy(ctx)
+	defer stop()
 
 	p, err := s.Fetch(ctx)
 	if err != nil {
@@ -195,6 +203,9 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 
 	s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, [][]Button{{{Text: "⏳ application…", CallbackData: cbBusy}}}))
 
+	stop := s.busy(ctx)
+	defer stop()
+
 	// An empty week (unexpected message text) never matches the site's: nothing is applied.
 	p, err := s.Apply(ctx, weekRe.FindString(msg.Text), desired)
 
@@ -213,6 +224,31 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 
 // fail logs err and sends its first line to Telegram, shortened: Playwright errors
 // carry long call logs, and a message over Telegram's limit would not be delivered.
+// busy shows "typing…" in the chat until stop is called: reading or changing the site takes
+// several seconds, and Telegram drops the indicator after 5.
+func (s Service) busy(ctx context.Context) (stop func()) {
+	s.report(s.TG.Typing(ctx, s.ChatID))
+
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		ticker := time.NewTicker(typingEvery)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := s.TG.Typing(ctx, s.ChatID); ctx.Err() == nil {
+					s.report(err)
+				}
+			}
+		}
+	}()
+
+	return cancel
+}
+
 func (s Service) fail(ctx context.Context, err error) {
 	s.report(err)
 

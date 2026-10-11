@@ -180,6 +180,16 @@ func TestDetailCallbackSendsDetail(t *testing.T) {
 	}
 }
 
+func TestSiteWorkShowsTyping(t *testing.T) {
+	for _, text := range []string{"/detail 1", "/recap"} {
+		s, _, calls, _ := newService(t)
+		s.handle(context.Background(), Update{Message: &Message{Chat: Chat{ID: testChat}, Text: text}})
+		if c := (*calls)[0]; c.Method != "sendChatAction" {
+			t.Errorf("%s: first call = %s, want sendChatAction", text, c.Method)
+		}
+	}
+}
+
 func TestFailMessageEscapesHTML(t *testing.T) {
 	s, _, calls, _ := newService(t)
 	s.fail(context.Background(), errors.New("a <b> & c"))

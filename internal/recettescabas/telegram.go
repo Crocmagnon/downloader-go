@@ -113,6 +113,11 @@ func (t Telegram) SendAlbum(ctx context.Context, chatID int64, photos []Photo) e
 	}{chatID, items}, nil)
 }
 
+// Typing shows "typing…" in the chat for about 5 seconds, or until the next message.
+func (t Telegram) Typing(ctx context.Context, chatID int64) error {
+	return t.call(ctx, "sendChatAction", map[string]any{"chat_id": chatID, "action": "typing"}, nil)
+}
+
 // Command is an entry of the bot's "/" menu.
 type Command struct {
 	Command     string `json:"command"`
