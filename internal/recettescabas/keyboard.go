@@ -6,10 +6,11 @@ import (
 	"strings"
 )
 
-// Button is a Telegram inline keyboard button.
+// Button is a Telegram inline keyboard button: either a callback or a link.
 type Button struct {
 	Text         string `json:"text"`
-	CallbackData string `json:"callback_data"`
+	CallbackData string `json:"callback_data,omitzero"`
+	URL          string `json:"url,omitzero"`
 }
 
 const (
@@ -90,7 +91,7 @@ func build(cells []cell) [][]Button {
 		})
 	}
 
-	return rows
+	return append(rows, []Button{{Text: "🌐 Ouvrir sur le site", URL: prefURL}})
 }
 
 func label(c cell) string {

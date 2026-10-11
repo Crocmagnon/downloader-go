@@ -47,6 +47,17 @@ func TestSendWithKeyboard(t *testing.T) {
 	}
 }
 
+func TestURLButtonHasNoCallbackData(t *testing.T) {
+	tg, calls := fakeTelegram(t, `{}`)
+	kb := [][]Button{{{Text: "site", URL: "https://example.com"}}}
+	if err := tg.Send(context.Background(), 42, "x", kb); err != nil {
+		t.Fatal(err)
+	}
+	if body := (*calls)[0].Body; !strings.Contains(body, `{"text":"site","url":"https://example.com"}`) {
+		t.Errorf("body = %s", body)
+	}
+}
+
 func TestEditWithoutKeyboardOmitsMarkup(t *testing.T) {
 	tg, calls := fakeTelegram(t, `{}`)
 	if err := tg.Edit(context.Background(), 42, 7, "⏳", nil); err != nil {

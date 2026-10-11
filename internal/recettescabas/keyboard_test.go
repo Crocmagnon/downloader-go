@@ -28,7 +28,7 @@ func sixItems() []Item {
 
 func TestNewKeyboard(t *testing.T) {
 	kb := NewKeyboard(sixItems())
-	want := [][]string{{"1", "✅2", "3", "✅4", "5"}, {"10"}}
+	want := [][]string{{"1", "✅2", "3", "✅4", "5"}, {"10"}, {"🌐 Ouvrir sur le site"}}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
@@ -38,12 +38,15 @@ func TestNewKeyboard(t *testing.T) {
 	if len(Pending(kb)) != 0 {
 		t.Error("fresh keyboard has no pending change")
 	}
+	if site := kb[2][0]; site.URL != prefURL || site.CallbackData != "" {
+		t.Errorf("site button = %+v", site)
+	}
 }
 
 func TestToggleStagesAndUnstages(t *testing.T) {
 	kb := Toggle(Toggle(NewKeyboard(sixItems()), 3), 2)
 
-	want := [][]string{{"1", "➖2", "➕3", "✅4", "5"}, {"10"}, {"✔️ Valider (2)", "✖️ Annuler"}}
+	want := [][]string{{"1", "➖2", "➕3", "✅4", "5"}, {"10"}, {"✔️ Valider (2)", "✖️ Annuler"}, {"🌐 Ouvrir sur le site"}}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Fatalf("keyboard = %v, want %v", got, want)
 	}
@@ -56,7 +59,7 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 
 	// Pressing again cancels the staged removal of 2: back to selected.
 	kb = Toggle(kb, 2)
-	want = [][]string{{"1", "✅2", "➕3", "✅4", "5"}, {"10"}, {"✔️ Valider (1)", "✖️ Annuler"}}
+	want = [][]string{{"1", "✅2", "➕3", "✅4", "5"}, {"10"}, {"✔️ Valider (1)", "✖️ Annuler"}, {"🌐 Ouvrir sur le site"}}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
@@ -64,7 +67,7 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	kb := Reset(Toggle(Toggle(NewKeyboard(sixItems()), 3), 2))
-	want := [][]string{{"1", "✅2", "3", "✅4", "5"}, {"10"}}
+	want := [][]string{{"1", "✅2", "3", "✅4", "5"}, {"10"}, {"🌐 Ouvrir sur le site"}}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
