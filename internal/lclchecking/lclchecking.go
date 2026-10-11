@@ -15,6 +15,12 @@ func Run(stdout, stderr io.Writer, headless bool, username, password, dir string
 }
 
 func downloadFile(page playwright.Page, identifier, password, outputDir string) error {
+	// LCL sometimes shows a modal (e.g. "Vigilance fraude") that blocks clicks until dismissed.
+	modalOK := page.Locator(".cdk-overlay-container").GetByRole("button", playwright.LocatorGetByRoleOptions{Name: "OK", Exact: playwright.Bool(true)})
+	if err := page.AddLocatorHandler(modalOK, func(l playwright.Locator) { _ = l.Click() }); err != nil {
+		return fmt.Errorf("adding modal handler: %w", err)
+	}
+
 	if err := login(page, identifier, password); err != nil {
 		return fmt.Errorf("logging in: %w", err)
 	}
