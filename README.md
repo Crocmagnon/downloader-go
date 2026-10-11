@@ -42,6 +42,12 @@ Commands:
   lcl-checking --username=STRING --password=STRING [flags]
     Download latest bank statement from LCL.
 
+  recettes-cabas recap --username=STRING --password=STRING --config=STRING --telegram-token=STRING --telegram-chat-id=INT-64 [flags]
+    Send the weekly recap to Telegram.
+
+  recettes-cabas bot --username=STRING --password=STRING --config=STRING --telegram-token=STRING --telegram-chat-id=INT-64 [flags]
+    Run the Telegram bot that applies selection changes.
+
   photos [flags]
     Download photos.
 
