@@ -110,6 +110,9 @@ func TestExtract(t *testing.T) {
 		}
 
 		for n, want := range map[int]string{
+			2:  "",
+			11: "yaourts au lait de vache aux fruits ou avec coulis de fruits et fromages blancs faisselle.",
+			16: "2 pâtes brisées et 1 pâte sablée",
 			12: "Tomme de Savoie ; gorgonzola ; saint Marcellin",
 			13: "Poires et raisins",
 			15: "Des chouquettes et un pain aux céréales de la Maison Bettant",

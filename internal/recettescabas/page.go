@@ -27,7 +27,7 @@ type Item struct {
 	Selected    bool
 	Ingredients string // "Ingrédients du cabas"
 	Pantry      string // "Ingrédients du placard"
-	Selection   string // "this week's selection" of an option (fruits, cheeses…), if any
+	Selection   string // an option's content (this week's fruits, cheeses…), if any
 	Image       string // photo URL, recipes only
 	Flags       []Hit  // set by Annotate
 }
@@ -68,11 +68,18 @@ const extractJS = `() => {
           const h = detail && [...detail.querySelectorAll('.h5')].find(h => h.textContent.includes(title));
           return text(h && h.nextElementSibling);
         };
-        const weekly = detail && [...detail.querySelectorAll('header p')]
-          .find(p => p.textContent.toLowerCase().includes('lection de la semaine'));
+        // An option's content is the bold text after a colon in its description:
+        // "La sélection de la semaine : <b>Poires et raisins</b>", "Un assortiment… : <strong>…</strong>".
+        const content = p => {
+          const bold = p.querySelector('strong, b');
+          const colon = p.textContent.indexOf(':');
+          return bold && colon >= 0 && colon < p.textContent.indexOf(bold.textContent) ? bold : null;
+        };
+        const paragraphs = span.dataset.ref === 'Option' && detail ? [...detail.querySelectorAll('header p')] : [];
+        const weekly = paragraphs.map(content).find(Boolean);
         return {
           inputId: input.id,
-          selection: text(weekly && weekly.querySelector('strong, b')),
+          selection: text(weekly),
           image: span.closest('li')?.querySelector('img.recette')?.src ?? '',
           name: text(link),
           label: text(document.querySelector('label[for="' + input.id + '"]')),
