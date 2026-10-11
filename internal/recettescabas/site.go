@@ -78,16 +78,16 @@ func login(page playwright.Page, username, password string) error {
 	// The cookie banner covers the login form; it may already be dismissed.
 	_ = page.GetByText("Continuer sans accepter").Click(playwright.LocatorClickOptions{Timeout: playwright.Float(cookieTimeoutMs)})
 
-	email := page.Locator("input[placeholder='Email']:visible").First()
+	email := page.Locator("#cli_email:visible") // a hidden copy exists on the page
 	if err := fill(email, username, "username"); err != nil {
 		return err
 	}
 
-	if err := fill(page.Locator("input[placeholder='Mot de passe']:visible").First(), password, "password"); err != nil {
+	if err := fill(page.Locator("#cli_mdp:visible"), password, "password"); err != nil {
 		return err
 	}
 
-	if err := page.GetByRole("button", playwright.PageGetByRoleOptions{Name: "Connexion"}).First().Click(); err != nil {
+	if err := page.Locator("#button-connexion-1").Click(); err != nil {
 		return fmt.Errorf("clicking login button: %w", err)
 	}
 
