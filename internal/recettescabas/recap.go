@@ -82,7 +82,10 @@ func line(it Item) string {
 	if len(it.Flags) > 0 {
 		s += emojis(it) + " "
 	}
-	s += fmt.Sprintf("%s (%s)", it.Name, it.Label)
+	s += it.Name
+	if label := labelSuffix(it); label != "" {
+		s += " (" + label + ")"
+	}
 
 	if len(it.Flags) > 0 {
 		words := make([]string, 0, len(it.Flags))
@@ -102,4 +105,21 @@ func emojis(it Item) string {
 	}
 
 	return s
+}
+
+// labelSuffix returns the item's label, minus its leading copy of the name: option labels
+// often repeat it ("Fruits Petit Format (9.10€)" for "Fruits Petit Format").
+func labelSuffix(it Item) string {
+	rest, ok := strings.CutPrefix(normalize(it.Label), normalize(it.Name))
+	if !ok {
+		return it.Label
+	}
+
+	// normalize keeps the rune count (except œ/æ, rare in labels), so the tail of the
+	// original label lines up with rest.
+	runes := []rune(it.Label)
+
+	tail := strings.TrimSpace(string(runes[max(0, len(runes)-len([]rune(rest))):]))
+
+	return strings.TrimSuffix(strings.TrimPrefix(tail, "("), ")") // line adds its own parentheses
 }

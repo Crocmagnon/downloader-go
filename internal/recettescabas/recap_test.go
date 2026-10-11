@@ -139,3 +139,20 @@ func TestAnnotateFixture(t *testing.T) {
 		}
 	})
 }
+
+func TestLineDropsLabelRepeatingName(t *testing.T) {
+	tests := []struct {
+		it   Item
+		want string
+	}{
+		{Item{N: 13, Name: "Fruits Petit Format", Label: "Fruits Petit Format (9.10€)", Option: true}, "13. Fruits Petit Format (9.10€)"},
+		{Item{N: 11, Name: "Assortiment de desserts lactés de la ferme", Label: "ASSORTIMENT DE DESSERTS LACTÉS DE LA FERME (10.70€)", Option: true}, "11. Assortiment de desserts lactés de la ferme (10.70€)"},
+		{Item{N: 10, Name: "Tarte fondante aux noix", Label: "Kit dessert à cuisiner (12.95€)", Option: true}, "10. Tarte fondante aux noix (Kit dessert à cuisiner (12.95€))"},
+		{Item{N: 2, Name: "Filet mignon", Label: "viande 1"}, "2. Filet mignon (viande 1)"},
+	}
+	for _, tt := range tests {
+		if got := line(tt.it); got != tt.want {
+			t.Errorf("line = %q, want %q", got, tt.want)
+		}
+	}
+}

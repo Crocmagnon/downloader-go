@@ -14,6 +14,7 @@ const (
 	prefFormSelector = `form[action*="validerPreference"]`
 	waitTimeoutMs    = 15000
 	cookieTimeoutMs  = 3000
+	priceTimeoutMs   = 5000
 )
 
 // The checkboxes are display:none, so Playwright's SetChecked can't be used.
@@ -126,6 +127,10 @@ func load(page playwright.Page, username, password string) (Page, error) {
 	}); err != nil {
 		return Page{}, fmt.Errorf("waiting for preferences form: %w", err)
 	}
+
+	// The site fills the price with a request after load. If it's late, the recap has no price.
+	_, _ = page.WaitForFunction(`() => document.querySelector('#js_cabas_prix')?.textContent.trim()`, nil,
+		playwright.PageWaitForFunctionOptions{Timeout: playwright.Float(priceTimeoutMs)})
 
 	return Extract(page)
 }
