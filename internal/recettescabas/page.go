@@ -26,7 +26,8 @@ type Item struct {
 	Option      bool
 	Selected    bool
 	Ingredients string
-	Flags       []Hit // set by Annotate
+	Selection   string // "this week's selection" of an option (fruits, cheeses…), if any
+	Flags       []Hit  // set by Annotate
 }
 
 type Page struct {
@@ -64,8 +65,11 @@ const extractJS = `() => {
           .filter(h => h.textContent.includes('Ingrédients'))
           .map(h => text(h.nextElementSibling))
           .join(' ; ') : '';
+        const weekly = detail && [...detail.querySelectorAll('header p')]
+          .find(p => p.textContent.toLowerCase().includes('lection de la semaine'));
         return {
           inputId: input.id,
+          selection: text(weekly && weekly.querySelector('strong, b')),
           name: text(link),
           label: text(document.querySelector('label[for="' + input.id + '"]')),
           option: span.dataset.ref === 'Option',
@@ -83,6 +87,7 @@ type rawItem struct {
 	Option      bool   `json:"option"`
 	Selected    bool   `json:"selected"`
 	Ingredients string `json:"ingredients"`
+	Selection   string `json:"selection"`
 }
 
 type rawPage struct {
@@ -126,7 +131,7 @@ func parse(raw rawPage) (Page, error) {
 	for _, r := range raw.Items {
 		it := Item{
 			InputID: r.InputID, Name: r.Name, Label: r.Label,
-			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients,
+			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients, Selection: r.Selection,
 		}
 
 		if r.Option {

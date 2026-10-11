@@ -95,6 +95,10 @@ func line(it Item) string {
 		s += " — " + strings.Join(words, ", ")
 	}
 
+	if it.Selection != "" {
+		s += "\n    ↳ " + it.Selection
+	}
+
 	return s
 }
 

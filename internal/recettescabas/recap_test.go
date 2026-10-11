@@ -149,6 +149,7 @@ func TestLineDropsLabelRepeatingName(t *testing.T) {
 		{Item{N: 11, Name: "Assortiment de desserts lactés de la ferme", Label: "ASSORTIMENT DE DESSERTS LACTÉS DE LA FERME (10.70€)", Option: true}, "11. Assortiment de desserts lactés de la ferme (10.70€)"},
 		{Item{N: 10, Name: "Tarte fondante aux noix", Label: "Kit dessert à cuisiner (12.95€)", Option: true}, "10. Tarte fondante aux noix (Kit dessert à cuisiner (12.95€))"},
 		{Item{N: 2, Name: "Filet mignon", Label: "viande 1"}, "2. Filet mignon (viande 1)"},
+		{Item{N: 13, Name: "Fruits", Label: "Fruits (9.10€)", Option: true, Selection: "Poires et raisins"}, "13. Fruits (9.10€)\n    ↳ Poires et raisins"},
 	}
 	for _, tt := range tests {
 		if got := line(tt.it); got != tt.want {

@@ -96,6 +96,19 @@ func TestExtract(t *testing.T) {
 			t.Errorf("recipe 4 ingredients = %q", r4.Ingredients)
 		}
 
+		for n, want := range map[int]string{
+			12: "Tomme de Savoie ; gorgonzola ; saint Marcellin",
+			13: "Poires et raisins",
+			15: "Des chouquettes et un pain aux céréales de la Maison Bettant",
+		} {
+			if got := item(t, p, n).Selection; got != want {
+				t.Errorf("option %d selection = %q, want %q", n, got, want)
+			}
+		}
+		if got := item(t, p, 10).Selection; got != "" {
+			t.Errorf("option 10 selection = %q, want empty", got)
+		}
+
 		o10 := item(t, p, 10)
 		if o10.Name != "Tarte fondante aux noix" || o10.Label != "Kit dessert à cuisiner (12.95€)" || !o10.Option || o10.InputID != "opt_6" {
 			t.Errorf("option 10 = %+v", o10)
