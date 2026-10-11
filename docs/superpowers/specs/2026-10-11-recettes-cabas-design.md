@@ -72,8 +72,12 @@ type Item struct {
 La page fournit en plus : la semaine, la date limite, le nombre de personnes et le prix
 (qui peut être absent).
 
-Les options exclues par la config sont retirées **avant** la numérotation, pour que les
-numéros restent ceux de la page. La numérotation est stable pendant toute la semaine.
+Les options sont numérotées 10+ dans l'ordre de la page, **puis** celles exclues par la
+config sont retirées. Les numéros ne dépendent donc pas de la config, et la numérotation
+est stable pendant toute la semaine (un trou peut apparaître là où était une option exclue).
+
+La date limite est affichée telle que la page la donne (« Jeudi 15 Octobre 2026 à 23h00 »),
+sans être interprétée : aucune logique n'en dépend.
 
 ## Configuration
 
@@ -111,7 +115,7 @@ d'environnement, comme pour les autres sous-commandes : `RC_USERNAME`, `RC_PASSW
 ## Récap
 
 ```
-🧺 Semaine du 19/10/2026 · modifiable jusqu'au jeudi 15/10 23h00
+🧺 Semaine du 19/10/2026 · modifiable jusqu'au Jeudi 15 Octobre 2026 à 23h00
 4 pers. · 102,25 €
 ⚠️ Sélection : 🥗 6
 
@@ -177,12 +181,13 @@ Un bouton par élément, 5 par ligne, puis une ligne d'actions :
 2. Playwright se connecte, charge la page et en extrait la semaine.
 3. **Garde-fou de semaine** : si la semaine de la page diffère de celle du message, le bot
    n'applique rien et répond « la semaine a changé, utilise /recap ».
-4. Pour chaque changement, le bot applique l'**état voulu** avec
-   `SetChecked(true/false)` sur l'input. L'opération est idempotente : un Valider traité
-   deux fois ne fait pas de dégât.
-5. Il soumet le formulaire via le bouton « VALIDER ». Le mécanisme exact (clic contre
-   `requestSubmit`, et le fait que le JS du site réagisse ou non à `SetChecked`) est à vérifier
-   contre le vrai site au moment de l'implémentation.
+4. Pour chaque changement, le bot écrit l'**état voulu** (`input.checked = true/false`). Les
+   inputs sont cachés (`display:none`), donc `SetChecked` de Playwright ne peut pas les
+   cocher. L'opération est idempotente : un Valider traité deux fois ne fait pas de dégât.
+5. Il soumet le formulaire par un `form.submit()` natif. Ce choix contourne le JavaScript du
+   site : le handler `change` pourrait rebasculer les cases, et le bouton peut être en classe
+   `disabled`. Tous les autres champs (personnes, robot, livraison) partent tels quels. Le
+   comportement est à vérifier contre le vrai site.
 6. Il recharge la page, l'extrait, et remplace le message par le nouveau récap avec un
    clavier frais. Ce récap fait office de confirmation de l'état réel.
 
