@@ -1,7 +1,7 @@
 {
   description = "A simple Go package";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-25.11";
+  inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
   # nixpkgs is pinned for playwright-driver so we have the proper version
   inputs.nixpkgs-pw.url = "github:NixOS/nixpkgs/f2676046a1cba86d6f86a64f5b6d427b2f4dec96";
 
@@ -39,7 +39,8 @@
           pkgs = nixpkgsFor.${system};
         in
         {
-          downloader-go = pkgs.buildGoModule {
+          # go.mod requires Go 1.27 (encoding/json/v2).
+          downloader-go = (pkgs.buildGoModule.override { go = pkgs.go_1_27; }) {
             pname = "downloader-go";
             inherit version;
             # In 'nix develop', we don't need a copy of the source tree
