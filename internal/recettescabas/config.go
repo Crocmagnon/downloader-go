@@ -3,8 +3,7 @@
 package recettescabas
 
 import (
-	"bytes"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"os"
 )
@@ -27,11 +26,8 @@ func LoadConfig(path string) (Config, error) {
 		return Config{}, fmt.Errorf("reading config: %w", err)
 	}
 
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-
 	var cfg Config
-	if err := dec.Decode(&cfg); err != nil {
+	if err := json.Unmarshal(data, &cfg, json.RejectUnknownMembers(true)); err != nil {
 		return Config{}, fmt.Errorf("parsing config %s: %w", path, err)
 	}
 
