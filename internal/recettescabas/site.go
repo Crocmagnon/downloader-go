@@ -129,7 +129,7 @@ func load(page playwright.Page, username, password string) (Page, error) {
 	}
 
 	// The site fills the price with a request after load. If it's late, the recap has no price.
-	_, _ = page.WaitForFunction(`() => document.querySelector('#js_cabas_prix')?.textContent.trim()`, nil,
+	_, _ = page.WaitForFunction(`() => document.querySelector('#js_total_prix')?.textContent.trim()`, nil,
 		playwright.PageWaitForFunctionOptions{Timeout: playwright.Float(priceTimeoutMs)})
 
 	return Extract(page)

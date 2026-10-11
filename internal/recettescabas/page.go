@@ -35,7 +35,7 @@ type Page struct {
 	Week     string // "19/10/2026"
 	Deadline string // "Jeudi 15 Octobre 2026 à 23h00"
 	People   string
-	Price    string // empty when the site's JS did not fill it
+	Price    string // total with delivery; empty when the site's JS did not fill it
 	Items    []Item // sorted by N
 }
 
@@ -55,7 +55,7 @@ const extractJS = `() => {
     week: text(document.querySelector('.box_recettes h3')),
     deadline: text(deadline && deadline.querySelector('strong')),
     people: text(document.querySelector('#art_id option:checked')),
-    price: text(document.querySelector('#js_cabas_prix')),
+    price: text(document.querySelector('#js_total_prix')),
     items: [...document.querySelectorAll('span.checkbox_formule')]
       .filter(span => span.querySelector('input[type=checkbox]'))
       .map(span => {
