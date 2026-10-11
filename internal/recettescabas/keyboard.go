@@ -19,6 +19,8 @@ const (
 	cbCancel   = "x"
 	cbBusy     = "-" // "⏳ application…" placeholder, ignored
 	cbDetail   = "d:"
+	cbStyle    = "s:" // /affichage: "s:n" numbers, "s:t" titles
+	perRow     = 5    // buttons per row with numbers only
 )
 
 // cell is the state of one item button. The keyboard is the only place pending
@@ -27,24 +29,30 @@ type cell struct {
 	n        int
 	selected bool
 	pending  bool
-	title    string // what follows the number: ". 🍄 Gratin champignons"
+	title    string // what follows the number: ". 🍄 Gratin champignons", or just "🍄" when compact
 }
 
-func NewKeyboard(items []Item) [][]Button {
-	return build(cellsFrom(items))
+// NewKeyboard shows each item with its title, or with its number only when compact.
+func NewKeyboard(items []Item, compact bool) [][]Button {
+	return build(cellsFrom(items, compact))
 }
 
 // DetailKeyboard lets /detail pick an item with a tap.
-func DetailKeyboard(items []Item) [][]Button {
-	return grid(cellsFrom(items), func(c cell) Button {
+func DetailKeyboard(items []Item, compact bool) [][]Button {
+	return grid(cellsFrom(items, compact), func(c cell) Button {
 		return Button{Text: strconv.Itoa(c.n) + c.title, CallbackData: cbDetail + strconv.Itoa(c.n)}
 	})
 }
 
-func cellsFrom(items []Item) []cell {
+func cellsFrom(items []Item, compact bool) []cell {
 	cells := make([]cell, 0, len(items))
 	for _, it := range items {
-		cells = append(cells, cell{n: it.N, selected: it.Selected, title: buttonTitle(it)})
+		title := buttonTitle(it)
+		if compact {
+			title = emojis(it)
+		}
+
+		cells = append(cells, cell{n: it.N, selected: it.Selected, title: title})
 	}
 
 	return cells
@@ -104,14 +112,25 @@ func build(cells []cell) [][]Button {
 	return append(rows, []Button{{Text: "🌐 Ouvrir sur le site", URL: prefURL}})
 }
 
-// grid lays out one button per row: titles need the whole width.
+// grid lays out one button per row when they have titles, which need the whole width.
+// Numbers only go perRow per row, options starting on their own row.
 func grid(cells []cell, button func(cell) Button) [][]Button {
-	rows := make([][]Button, 0, len(cells))
-	for _, c := range cells {
-		rows = append(rows, []Button{button(c)})
+	var rows [][]Button
+
+	for i, c := range cells {
+		newOptions := c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN)
+		if len(rows) == 0 || hasTitle(c) || len(rows[len(rows)-1]) == perRow || newOptions {
+			rows = append(rows, nil)
+		}
+		rows[len(rows)-1] = append(rows[len(rows)-1], button(c))
 	}
 
 	return rows
+}
+
+// hasTitle tells the two layouts apart, which also works on a keyboard read back from Telegram.
+func hasTitle(c cell) bool {
+	return strings.HasPrefix(c.title, ". ")
 }
 
 // buttonTitle renders ". 🍄 Gratin champignons-boulgour": flags, then the name up to its

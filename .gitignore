@@ -2,6 +2,7 @@
 *.pdf
 dist
 cookies.json
+prefs.json
 screenshots
 .DS_Store
 result

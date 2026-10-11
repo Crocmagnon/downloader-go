@@ -45,6 +45,8 @@ func NewService(stdout, stderr io.Writer, headless bool, username, password, con
 		ChatID: chatID,
 		Config: cfg,
 		Log:    stderr,
+		// In the working directory, next to cookies.json.
+		PrefsPath: "prefs.json",
 		Fetch: func(context.Context) (Page, error) {
 			var p Page
 			err := browse(func(page playwright.Page) error {

@@ -32,7 +32,7 @@ func fourItems() []Item {
 }
 
 func TestNewKeyboard(t *testing.T) {
-	kb := NewKeyboard(fourItems())
+	kb := NewKeyboard(fourItems(), false)
 	want := [][]string{
 		{"1. Wok de légumes, nouilles soba"},
 		{"✅ 2. Filet mignon aux pommes"},
@@ -55,7 +55,7 @@ func TestNewKeyboard(t *testing.T) {
 }
 
 func TestToggleStagesAndUnstages(t *testing.T) {
-	kb := Toggle(Toggle(NewKeyboard(fourItems()), 4), 2)
+	kb := Toggle(Toggle(NewKeyboard(fourItems(), false), 4), 2)
 
 	want := [][]string{
 		{"1. Wok de légumes, nouilles soba"},
@@ -86,7 +86,7 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 }
 
 func TestDetailKeyboard(t *testing.T) {
-	kb := DetailKeyboard(fourItems())
+	kb := DetailKeyboard(fourItems(), false)
 	want := [][]string{
 		{"1. Wok de légumes, nouilles soba"},
 		{"2. Filet mignon aux pommes"},
@@ -102,15 +102,35 @@ func TestDetailKeyboard(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
-	kb := Reset(Toggle(Toggle(NewKeyboard(fourItems()), 4), 2))
-	if got, want := texts(kb), texts(NewKeyboard(fourItems())); !equalRows(got, want) {
+	kb := Reset(Toggle(Toggle(NewKeyboard(fourItems(), false), 4), 2))
+	if got, want := texts(kb), texts(NewKeyboard(fourItems(), false)); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
 }
 
 func TestToggleUnknownNumberIsNoop(t *testing.T) {
-	kb := Toggle(NewKeyboard(fourItems()), 42)
+	kb := Toggle(NewKeyboard(fourItems(), false), 42)
 	if len(Pending(kb)) != 0 {
 		t.Error("toggling an unknown number must not stage anything")
+	}
+}
+
+func TestCompactKeyboard(t *testing.T) {
+	items := []Item{
+		{N: 1, Name: "Wok"}, {N: 2, Name: "Filet", Selected: true}, {N: 3}, {N: 4, Flags: []Hit{{"🍄", "champignons"}}}, {N: 5},
+		{N: 6, Flags: []Hit{{"🥗", "salade"}}}, {N: 9, Selected: true, Flags: []Hit{{"🍄", "champignons"}}},
+		{N: 10}, {N: 11},
+	}
+	kb := Toggle(Toggle(NewKeyboard(items, true), 4), 9)
+	want := [][]string{{"1", "✅ 2", "3", "➕ 4🍄", "5"}, {"6🥗", "➖ 9🍄"}, {"10", "11"}, {"✔️ Valider (2)", "✖️ Annuler"}, {"🌐 Ouvrir sur le site"}}
+	if got := texts(kb); !equalRows(got, want) {
+		t.Errorf("keyboard = %v, want %v", got, want)
+	}
+	if got, want := Pending(kb), map[int]bool{4: true, 9: false}; !maps.Equal(got, want) {
+		t.Errorf("pending = %v, want %v", got, want)
+	}
+
+	if got, want := texts(DetailKeyboard(items[:3], true)), [][]string{{"1", "2", "3"}}; !equalRows(got, want) {
+		t.Errorf("detail keyboard = %v, want %v", got, want)
 	}
 }

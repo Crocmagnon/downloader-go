@@ -24,7 +24,7 @@ const (
 	maxAlbum = 10
 )
 
-const helpText = "/recap — renvoie le récap de la semaine\n/detail N — ingrédients de l'élément N"
+const helpText = "/recap — renvoie le récap de la semaine\n/detail N — ingrédients de l'élément N\n/affichage — boutons avec titres ou numéros"
 
 type Service struct {
 	TG     Telegram
@@ -36,6 +36,8 @@ type Service struct {
 	// as the site saved it. It returns ErrWeekChanged if the site's week isn't week.
 	Apply func(ctx context.Context, week string, desired map[int]bool) (Page, error)
 	Log   io.Writer
+	// PrefsPath is the /affichage settings file, shared by the bot and the weekly recap.
+	PrefsPath string
 }
 
 func (s Service) SendRecap(ctx context.Context) error {
@@ -57,7 +59,7 @@ func (s Service) SendRecap(ctx context.Context) error {
 		s.report(s.TG.SendAlbum(ctx, s.ChatID, photos[:min(len(photos), maxAlbum)]))
 	}
 
-	return s.TG.Send(ctx, s.ChatID, RecapText(p), NewKeyboard(p.Items))
+	return s.TG.Send(ctx, s.ChatID, RecapText(p), NewKeyboard(p.Items, s.prefs().Compact))
 }
 
 // Run handles updates until ctx is done.
@@ -66,6 +68,7 @@ func (s Service) Run(ctx context.Context) error {
 	s.report(s.TG.SetCommands(ctx, []Command{
 		{Command: "recap", Description: "Récap de la semaine"},
 		{Command: "detail", Description: "Ingrédients d'un élément : /detail 6"},
+		{Command: "affichage", Description: "Boutons avec titres ou numéros"},
 	}))
 
 	offset := 0
@@ -127,6 +130,11 @@ func (s Service) message(ctx context.Context, m *Message) {
 		}
 	case "/detail":
 		s.detail(ctx, arg)
+	case "/affichage":
+		s.report(s.TG.Send(ctx, s.ChatID, "Affichage des boutons :", [][]Button{{
+			{Text: "🔢 Numéros", CallbackData: cbStyle + "n"},
+			{Text: "🔤 Titres", CallbackData: cbStyle + "t"},
+		}}))
 	default:
 		s.report(s.TG.Send(ctx, s.ChatID, helpText, nil))
 	}
@@ -154,7 +162,7 @@ func (s Service) detail(ctx context.Context, arg string) {
 
 	p = Annotate(p, s.Config)
 	if arg == "" {
-		s.report(s.TG.Send(ctx, s.ChatID, "Quel élément ?", DetailKeyboard(p.Items)))
+		s.report(s.TG.Send(ctx, s.ChatID, "Quel élément ?", DetailKeyboard(p.Items, s.prefs().Compact)))
 		return
 	}
 
@@ -188,6 +196,18 @@ func (s Service) callback(ctx context.Context, q *CallbackQuery) {
 		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, Toggle(kb, n)))
 	case strings.HasPrefix(q.Data, cbDetail):
 		s.detail(ctx, strings.TrimPrefix(q.Data, cbDetail))
+	case strings.HasPrefix(q.Data, cbStyle):
+		compact := q.Data == cbStyle+"n"
+		if err := SavePrefs(s.PrefsPath, Prefs{Compact: compact}); err != nil {
+			s.fail(ctx, err)
+			return
+		}
+
+		text := "Affichage : titres. Prochain /recap avec ce style."
+		if compact {
+			text = "Affichage : numéros. Prochain /recap avec ce style."
+		}
+		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, text, nil))
 	case q.Data == cbCancel:
 		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, Reset(kb)))
 	case q.Data == cbValidate:
@@ -218,7 +238,7 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 		s.fail(ctx, err)
 	default:
 		p = Annotate(p, s.Config)
-		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, RecapText(p), NewKeyboard(p.Items)))
+		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, RecapText(p), NewKeyboard(p.Items, s.prefs().Compact)))
 	}
 }
 
@@ -247,6 +267,14 @@ func (s Service) busy(ctx context.Context) (stop func()) {
 	}()
 
 	return cancel
+}
+
+// prefs falls back to the defaults if the file can't be read.
+func (s Service) prefs() Prefs {
+	p, err := LoadPrefs(s.PrefsPath)
+	s.report(err)
+
+	return p
 }
 
 func (s Service) fail(ctx context.Context, err error) {

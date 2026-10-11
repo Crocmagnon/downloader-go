@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -34,7 +35,7 @@ func newService(t *testing.T) (Service, *fakes, *[]tgCall, *bytes.Buffer) {
 	f := &fakes{}
 	var log bytes.Buffer
 	s := Service{
-		TG: tg, ChatID: testChat, Config: testConfig(), Log: &log,
+		TG: tg, ChatID: testChat, Config: testConfig(), Log: &log, PrefsPath: filepath.Join(t.TempDir(), "prefs.json"),
 		Fetch: func(context.Context) (Page, error) { f.fetches++; return botPage(), nil },
 		Apply: func(_ context.Context, week string, desired map[int]bool) (Page, error) {
 			f.applyWeek, f.applyWanted = week, desired
@@ -89,7 +90,7 @@ func TestSendRecapSendsRecipeAlbumFirst(t *testing.T) {
 func TestIgnoresOtherChats(t *testing.T) {
 	s, f, calls, log := newService(t)
 	s.handle(context.Background(), Update{Message: &Message{Chat: Chat{ID: 999}, Text: "/recap"}})
-	other := recapMessage(NewKeyboard(botPage().Items))
+	other := recapMessage(NewKeyboard(botPage().Items, false))
 	other.Chat.ID = 999
 	s.handle(context.Background(), callback(cbValidate, other))
 
@@ -103,7 +104,7 @@ func TestIgnoresOtherChats(t *testing.T) {
 
 func TestToggleCallbackEditsKeyboardOnly(t *testing.T) {
 	s, f, calls, _ := newService(t)
-	s.handle(context.Background(), callback("t:3", recapMessage(NewKeyboard(botPage().Items))))
+	s.handle(context.Background(), callback("t:3", recapMessage(NewKeyboard(botPage().Items, false))))
 
 	if (*calls)[0].Method != "answerCallbackQuery" {
 		t.Errorf("first call = %s, want answerCallbackQuery", (*calls)[0].Method)
@@ -119,7 +120,7 @@ func TestToggleCallbackEditsKeyboardOnly(t *testing.T) {
 
 func TestGarbageCallbackIsNoop(t *testing.T) {
 	s, _, calls, _ := newService(t)
-	s.handle(context.Background(), callback("t:x", recapMessage(NewKeyboard(botPage().Items))))
+	s.handle(context.Background(), callback("t:x", recapMessage(NewKeyboard(botPage().Items, false))))
 	s.handle(context.Background(), callback("zzz", recapMessage(nil)))
 	for _, c := range *calls {
 		if c.Method != "answerCallbackQuery" {
@@ -130,7 +131,7 @@ func TestGarbageCallbackIsNoop(t *testing.T) {
 
 func TestValidateAppliesAndShowsNewRecap(t *testing.T) {
 	s, f, calls, _ := newService(t)
-	kb := Toggle(NewKeyboard(botPage().Items), 3)
+	kb := Toggle(NewKeyboard(botPage().Items, false), 3)
 	s.handle(context.Background(), callback(cbValidate, recapMessage(kb)))
 
 	if f.applyWeek != "19/10/2026" || !maps.Equal(f.applyWanted, map[int]bool{3: true}) {
@@ -145,7 +146,7 @@ func TestValidateAppliesAndShowsNewRecap(t *testing.T) {
 func TestValidateWeekChanged(t *testing.T) {
 	s, f, calls, _ := newService(t)
 	f.applyErr = ErrWeekChanged
-	s.handle(context.Background(), callback(cbValidate, recapMessage(Toggle(NewKeyboard(botPage().Items), 3))))
+	s.handle(context.Background(), callback(cbValidate, recapMessage(Toggle(NewKeyboard(botPage().Items, false), 3))))
 
 	var warned, removed bool
 	for _, c := range *calls {
@@ -160,7 +161,7 @@ func TestValidateWeekChanged(t *testing.T) {
 func TestValidateFailureRestoresKeyboard(t *testing.T) {
 	s, f, calls, _ := newService(t)
 	f.applyErr = errors.New("boom")
-	s.handle(context.Background(), callback(cbValidate, recapMessage(Toggle(NewKeyboard(botPage().Items), 3))))
+	s.handle(context.Background(), callback(cbValidate, recapMessage(Toggle(NewKeyboard(botPage().Items, false), 3))))
 
 	var restored, reported bool
 	for _, c := range *calls {
@@ -187,6 +188,26 @@ func TestSiteWorkShowsTyping(t *testing.T) {
 		if c := (*calls)[0]; c.Method != "sendChatAction" {
 			t.Errorf("%s: first call = %s, want sendChatAction", text, c.Method)
 		}
+	}
+}
+
+func TestDisplayCommandSwitchesKeyboardStyle(t *testing.T) {
+	s, _, calls, _ := newService(t)
+	s.handle(context.Background(), Update{Message: &Message{Chat: Chat{ID: testChat}, Text: "/affichage"}})
+	if c := last(calls); c.Method != "sendMessage" || !strings.Contains(c.Body, `"callback_data":"s:n"`) || !strings.Contains(c.Body, `"callback_data":"s:t"`) {
+		t.Fatalf("call = %+v", c)
+	}
+
+	s.handle(context.Background(), callback("s:n", &Message{MessageID: 5, Chat: Chat{ID: testChat}}))
+	if p, err := LoadPrefs(s.PrefsPath); err != nil || !p.Compact {
+		t.Fatalf("prefs = %+v, err = %v", p, err)
+	}
+
+	if err := s.SendRecap(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if c := last(calls); !strings.Contains(c.Body, `{"text":"✅ 2","callback_data":"t:2"}`) {
+		t.Errorf("recap keyboard not compact: %s", c.Body)
 	}
 }
 
