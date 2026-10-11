@@ -17,7 +17,7 @@ const (
 	cbToggle   = "t:"
 	cbValidate = "v"
 	cbCancel   = "x"
-	cbBusy     = "-" // "⏳ application…" placeholder, ignored
+	cbNoop     = "-" // section headers and the "⏳ application…" placeholder
 	cbDetail   = "d:"
 	cbStyle    = "s:" // /affichage: "s:n" numbers, "s:t" titles
 	perRow     = 5    // buttons per row with numbers only
@@ -118,8 +118,16 @@ func grid(cells []cell, button func(cell) Button) [][]Button {
 	var rows [][]Button
 
 	for i, c := range cells {
-		newOptions := c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN)
-		if len(rows) == 0 || hasTitle(c) || len(rows[len(rows)-1]) == perRow || newOptions {
+		// Telegram has no headers in keyboards: an inert button stands for one.
+		switch {
+		case i == 0 && c.n < firstOptionN:
+			rows = append(rows, []Button{{Text: "🍽️ Recettes", CallbackData: cbNoop}})
+		case c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN):
+			rows = append(rows, []Button{{Text: "🧺 Options", CallbackData: cbNoop}})
+		}
+
+		last := rows[len(rows)-1]
+		if hasTitle(c) || len(last) == perRow || last[0].CallbackData == cbNoop {
 			rows = append(rows, nil)
 		}
 		rows[len(rows)-1] = append(rows[len(rows)-1], button(c))

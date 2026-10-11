@@ -34,22 +34,27 @@ func fourItems() []Item {
 func TestNewKeyboard(t *testing.T) {
 	kb := NewKeyboard(fourItems(), false)
 	want := [][]string{
+		{"🍽️ Recettes"},
 		{"1. Wok de légumes, nouilles soba"},
 		{"✅ 2. Filet mignon aux pommes"},
 		{"4. 🍄 Gratin champignons-boulgour"},
+		{"🧺 Options"},
 		{"10. Tarte fondante aux noix"},
 		{"🌐 Ouvrir sur le site"},
 	}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
-	if kb[3][0].CallbackData != "t:10" {
-		t.Errorf("callback = %q", kb[3][0].CallbackData)
+	if kb[5][0].CallbackData != "t:10" {
+		t.Errorf("callback = %q", kb[5][0].CallbackData)
+	}
+	if kb[0][0].CallbackData != cbNoop || kb[4][0].CallbackData != cbNoop {
+		t.Errorf("separators = %+v, %+v", kb[0][0], kb[4][0])
 	}
 	if len(Pending(kb)) != 0 {
 		t.Error("fresh keyboard has no pending change")
 	}
-	if site := kb[4][0]; site.URL != prefURL || site.CallbackData != "" {
+	if site := kb[6][0]; site.URL != prefURL || site.CallbackData != "" {
 		t.Errorf("site button = %+v", site)
 	}
 }
@@ -58,9 +63,11 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 	kb := Toggle(Toggle(NewKeyboard(fourItems(), false), 4), 2)
 
 	want := [][]string{
+		{"🍽️ Recettes"},
 		{"1. Wok de légumes, nouilles soba"},
 		{"➖ 2. Filet mignon aux pommes"},
 		{"➕ 4. 🍄 Gratin champignons-boulgour"},
+		{"🧺 Options"},
 		{"10. Tarte fondante aux noix"},
 		{"✔️ Valider (2)", "✖️ Annuler"},
 		{"🌐 Ouvrir sur le site"},
@@ -71,13 +78,13 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 	if got, want := Pending(kb), map[int]bool{2: false, 4: true}; !maps.Equal(got, want) {
 		t.Errorf("pending = %v, want %v", got, want)
 	}
-	if kb[4][0].CallbackData != cbValidate || kb[4][1].CallbackData != cbCancel {
-		t.Errorf("action callbacks = %q, %q", kb[4][0].CallbackData, kb[4][1].CallbackData)
+	if kb[6][0].CallbackData != cbValidate || kb[6][1].CallbackData != cbCancel {
+		t.Errorf("action callbacks = %q, %q", kb[6][0].CallbackData, kb[6][1].CallbackData)
 	}
 
 	// Pressing again cancels the staged removal of 2: back to selected, title kept.
 	kb = Toggle(kb, 2)
-	if got := kb[1][0].Text; got != "✅ 2. Filet mignon aux pommes" {
+	if got := kb[2][0].Text; got != "✅ 2. Filet mignon aux pommes" {
 		t.Errorf("button 2 = %q", got)
 	}
 	if got, want := Pending(kb), map[int]bool{4: true}; !maps.Equal(got, want) {
@@ -88,16 +95,18 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 func TestDetailKeyboard(t *testing.T) {
 	kb := DetailKeyboard(fourItems(), false)
 	want := [][]string{
+		{"🍽️ Recettes"},
 		{"1. Wok de légumes, nouilles soba"},
 		{"2. Filet mignon aux pommes"},
 		{"4. 🍄 Gratin champignons-boulgour"},
+		{"🧺 Options"},
 		{"10. Tarte fondante aux noix"},
 	}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
-	if kb[3][0].CallbackData != "d:10" {
-		t.Errorf("callback = %q", kb[3][0].CallbackData)
+	if kb[5][0].CallbackData != "d:10" {
+		t.Errorf("callback = %q", kb[5][0].CallbackData)
 	}
 }
 
@@ -122,7 +131,7 @@ func TestCompactKeyboard(t *testing.T) {
 		{N: 10}, {N: 11},
 	}
 	kb := Toggle(Toggle(NewKeyboard(items, true), 4), 9)
-	want := [][]string{{"1", "✅ 2", "3", "➕ 4🍄", "5"}, {"6🥗", "➖ 9🍄"}, {"10", "11"}, {"✔️ Valider (2)", "✖️ Annuler"}, {"🌐 Ouvrir sur le site"}}
+	want := [][]string{{"🍽️ Recettes"}, {"1", "✅ 2", "3", "➕ 4🍄", "5"}, {"6🥗", "➖ 9🍄"}, {"🧺 Options"}, {"10", "11"}, {"✔️ Valider (2)", "✖️ Annuler"}, {"🌐 Ouvrir sur le site"}}
 	if got := texts(kb); !equalRows(got, want) {
 		t.Errorf("keyboard = %v, want %v", got, want)
 	}
@@ -130,7 +139,7 @@ func TestCompactKeyboard(t *testing.T) {
 		t.Errorf("pending = %v, want %v", got, want)
 	}
 
-	if got, want := texts(DetailKeyboard(items[:3], true)), [][]string{{"1", "2", "3"}}; !equalRows(got, want) {
+	if got, want := texts(DetailKeyboard(items[:3], true)), [][]string{{"🍽️ Recettes"}, {"1", "2", "3"}}; !equalRows(got, want) {
 		t.Errorf("detail keyboard = %v, want %v", got, want)
 	}
 }

@@ -221,7 +221,7 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 		return
 	}
 
-	s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, [][]Button{{{Text: "⏳ application…", CallbackData: cbBusy}}}))
+	s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, [][]Button{{{Text: "⏳ application…", CallbackData: cbNoop}}}))
 
 	stop := s.busy(ctx)
 	defer stop()
