@@ -1,0 +1,7 @@
+{
+  "excludeOptions": ["château", "domaine", "vin", "rosé", "IGP", "AOC"],
+  "flags": [
+    {"emoji": "🍄", "keywords": ["champignon", "cèpe", "girolle", "shiitake", "pleurote", "morille", "trompette"]},
+    {"emoji": "🥗", "keywords": ["salade", "laitue", "mâche", "roquette", "mesclun", "batavia", "sucrine", "romaine", "jeunes pousses"]}
+  ]
+}
