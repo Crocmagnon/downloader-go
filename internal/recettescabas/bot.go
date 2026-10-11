@@ -127,9 +127,13 @@ func (s Service) message(ctx context.Context, m *Message) {
 	}
 }
 
+// detail sends the ingredients of item arg, or a picker when arg is empty (the "/" menu
+// sends commands right away, without letting the user type a number).
 func (s Service) detail(ctx context.Context, arg string) {
-	n, err := strconv.Atoi(strings.TrimSpace(arg))
-	if err != nil {
+	arg = strings.TrimSpace(arg)
+
+	n, err := strconv.Atoi(arg)
+	if err != nil && arg != "" {
 		s.report(s.TG.Send(ctx, s.ChatID, "Usage : /detail N, par exemple /detail 6", nil))
 		return
 	}
@@ -140,7 +144,13 @@ func (s Service) detail(ctx context.Context, arg string) {
 		return
 	}
 
-	for _, it := range Annotate(p, s.Config).Items {
+	p = Annotate(p, s.Config)
+	if arg == "" {
+		s.report(s.TG.Send(ctx, s.ChatID, "Quel élément ?", DetailKeyboard(p.Items)))
+		return
+	}
+
+	for _, it := range p.Items {
 		if it.N == n {
 			s.report(s.TG.Send(ctx, s.ChatID, DetailText(it), nil))
 			return
@@ -168,6 +178,8 @@ func (s Service) callback(ctx context.Context, q *CallbackQuery) {
 		}
 
 		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, Toggle(kb, n)))
+	case strings.HasPrefix(q.Data, cbDetail):
+		s.detail(ctx, strings.TrimPrefix(q.Data, cbDetail))
 	case q.Data == cbCancel:
 		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, Reset(kb)))
 	case q.Data == cbValidate:

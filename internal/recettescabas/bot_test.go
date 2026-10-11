@@ -172,6 +172,14 @@ func TestValidateFailureRestoresKeyboard(t *testing.T) {
 	}
 }
 
+func TestDetailCallbackSendsDetail(t *testing.T) {
+	s, f, calls, _ := newService(t)
+	s.handle(context.Background(), callback("d:1", &Message{MessageID: 9, Chat: Chat{ID: testChat}}))
+	if c := last(calls); c.Method != "sendMessage" || !strings.Contains(c.Body, "champignons de Paris") || f.fetches != 1 {
+		t.Errorf("call = %+v, fetches = %d", c, f.fetches)
+	}
+}
+
 func TestFailMessageEscapesHTML(t *testing.T) {
 	s, _, calls, _ := newService(t)
 	s.fail(context.Background(), errors.New("a <b> & c"))
@@ -189,7 +197,7 @@ func TestDetail(t *testing.T) {
 		{"/detail 1", "champignons de Paris", 1},
 		{"/detail 42", "Élément 42 inconnu", 1},
 		{"/detail abc", "Usage : /detail N", 0},
-		{"/detail", "Usage : /detail N", 0},
+		{"/detail", `"callback_data":"d:3"`, 1},
 		{"bonjour", "/recap", 0},
 	}
 	for _, tt := range tests {

@@ -18,6 +18,7 @@ const (
 	cbValidate = "v"
 	cbCancel   = "x"
 	cbBusy     = "-" // "⏳ application…" placeholder, ignored
+	cbDetail   = "d:"
 	perRow     = 5
 )
 
@@ -31,12 +32,23 @@ type cell struct {
 }
 
 func NewKeyboard(items []Item) [][]Button {
+	return build(cellsFrom(items))
+}
+
+// DetailKeyboard lets /detail pick an item with a tap.
+func DetailKeyboard(items []Item) [][]Button {
+	return grid(cellsFrom(items), func(c cell) Button {
+		return Button{Text: strconv.Itoa(c.n) + c.flags, CallbackData: cbDetail + strconv.Itoa(c.n)}
+	})
+}
+
+func cellsFrom(items []Item) []cell {
 	cells := make([]cell, 0, len(items))
 	for _, it := range items {
 		cells = append(cells, cell{n: it.N, selected: it.Selected, flags: emojis(it)})
 	}
 
-	return build(cells)
+	return cells
 }
 
 func Toggle(kb [][]Button, n int) [][]Button {
@@ -72,17 +84,12 @@ func Pending(kb [][]Button) map[int]bool {
 }
 
 func build(cells []cell) [][]Button {
-	var rows [][]Button
+	rows := grid(cells, func(c cell) Button {
+		return Button{Text: label(c), CallbackData: cbToggle + strconv.Itoa(c.n)}
+	})
 
 	pending := 0
-	for i, c := range cells {
-		// Options start on their own row.
-		newOptions := c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN)
-		if len(rows) == 0 || len(rows[len(rows)-1]) == perRow || newOptions {
-			rows = append(rows, nil)
-		}
-		rows[len(rows)-1] = append(rows[len(rows)-1], Button{Text: label(c), CallbackData: cbToggle + strconv.Itoa(c.n)})
-
+	for _, c := range cells {
 		if c.pending {
 			pending++
 		}
@@ -96,6 +103,21 @@ func build(cells []cell) [][]Button {
 	}
 
 	return append(rows, []Button{{Text: "🌐 Ouvrir sur le site", URL: prefURL}})
+}
+
+// grid lays out one button per cell, perRow per row, options starting on their own row.
+func grid(cells []cell, button func(cell) Button) [][]Button {
+	var rows [][]Button
+
+	for i, c := range cells {
+		newOptions := c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN)
+		if len(rows) == 0 || len(rows[len(rows)-1]) == perRow || newOptions {
+			rows = append(rows, nil)
+		}
+		rows[len(rows)-1] = append(rows[len(rows)-1], button(c))
+	}
+
+	return rows
 }
 
 func label(c cell) string {

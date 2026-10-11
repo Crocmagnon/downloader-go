@@ -81,6 +81,16 @@ func TestKeyboardShowsFlagsAndStartsOptionsOnANewRow(t *testing.T) {
 	}
 }
 
+func TestDetailKeyboard(t *testing.T) {
+	kb := DetailKeyboard([]Item{{N: 1}, {N: 4, Flags: []Hit{{"🍄", "champignons"}}}, {N: 10}})
+	if got, want := texts(kb), [][]string{{"1", "4🍄"}, {"10"}}; !equalRows(got, want) {
+		t.Errorf("keyboard = %v, want %v", got, want)
+	}
+	if kb[1][0].CallbackData != "d:10" {
+		t.Errorf("callback = %q", kb[1][0].CallbackData)
+	}
+}
+
 func TestReset(t *testing.T) {
 	kb := Reset(Toggle(Toggle(NewKeyboard(sixItems()), 3), 2))
 	want := [][]string{{"1", "✅2", "3", "✅4", "5"}, {"10"}, {"🌐 Ouvrir sur le site"}}
