@@ -65,6 +65,22 @@ func TestToggleStagesAndUnstages(t *testing.T) {
 	}
 }
 
+func TestKeyboardShowsFlagsAndStartsOptionsOnANewRow(t *testing.T) {
+	items := []Item{
+		{N: 1}, {N: 2}, {N: 3}, {N: 4, Flags: []Hit{{"🍄", "champignons"}}}, {N: 5},
+		{N: 6, Flags: []Hit{{"🥗", "salade"}}}, {N: 9, Selected: true, Flags: []Hit{{"🍄", "champignons"}}},
+		{N: 10}, {N: 11},
+	}
+	kb := Toggle(Toggle(NewKeyboard(items), 4), 9)
+	want := [][]string{{"1", "2", "3", "➕4🍄", "5"}, {"6🥗", "➖9🍄"}, {"10", "11"}, {"✔️ Valider (2)", "✖️ Annuler"}, {"🌐 Ouvrir sur le site"}}
+	if got := texts(kb); !equalRows(got, want) {
+		t.Errorf("keyboard = %v, want %v", got, want)
+	}
+	if got, want := Pending(kb), map[int]bool{4: true, 9: false}; !maps.Equal(got, want) {
+		t.Errorf("pending = %v, want %v", got, want)
+	}
+}
+
 func TestReset(t *testing.T) {
 	kb := Reset(Toggle(Toggle(NewKeyboard(sixItems()), 3), 2))
 	want := [][]string{{"1", "✅2", "3", "✅4", "5"}, {"10"}, {"🌐 Ouvrir sur le site"}}

@@ -2,6 +2,7 @@ package recettescabas
 
 import (
 	"fmt"
+	"html"
 	"strconv"
 	"strings"
 )
@@ -34,10 +35,13 @@ func Annotate(p Page, cfg Config) Page {
 func RecapText(p Page) string {
 	var b strings.Builder
 
-	fmt.Fprintf(&b, "🧺 Semaine du %s · modifiable jusqu'au %s\n", p.Week, p.Deadline)
-	b.WriteString(p.People)
+	// Texts are sent as HTML: everything from the site is escaped.
+	esc := html.EscapeString
+
+	fmt.Fprintf(&b, "<b>🧺 Semaine du %s</b>\nModifiable jusqu'au %s\n", esc(p.Week), esc(p.Deadline))
+	b.WriteString(esc(p.People))
 	if p.Price != "" {
-		fmt.Fprintf(&b, " · %s €", p.Price)
+		fmt.Fprintf(&b, " · %s €", esc(p.Price))
 	}
 
 	var alerts []string
@@ -50,19 +54,21 @@ func RecapText(p Page) string {
 		b.WriteString("\n⚠️ Sélection : " + strings.Join(alerts, ", "))
 	}
 
-	section := func(title string, selected bool) {
+	section := func(title string, option, selected bool) {
 		var lines []string
 		for _, it := range p.Items {
-			if it.Selected == selected {
+			if it.Option == option && it.Selected == selected {
 				lines = append(lines, line(it))
 			}
 		}
 		if len(lines) > 0 {
-			b.WriteString("\n\n" + title + "\n" + strings.Join(lines, "\n"))
+			b.WriteString("\n\n<b>" + title + "</b>\n" + strings.Join(lines, "\n"))
 		}
 	}
-	section("✅ Sélection", true)
-	section("➕ Disponibles", false)
+	section("✅ Recettes sélectionnées", false, true)
+	section("➕ Recettes disponibles", false, false)
+	section("✅ Options sélectionnées", true, true)
+	section("➕ Options disponibles", true, false)
 
 	return b.String()
 }
@@ -73,30 +79,30 @@ func DetailText(it Item) string {
 		ingredients = "(pas d'ingrédients indiqués)"
 	}
 
-	return line(it) + "\n\n" + ingredients
+	return line(it) + "\n\n" + html.EscapeString(ingredients)
 }
 
-// line renders "9. 🍄 Poulet (viande 2) — champignons".
+// line renders "9. 🍄 Poulet (viande 2) — <b>champignons</b>" as HTML.
 func line(it Item) string {
 	s := strconv.Itoa(it.N) + ". "
 	if len(it.Flags) > 0 {
 		s += emojis(it) + " "
 	}
-	s += it.Name
+	s += html.EscapeString(it.Name)
 	if label := labelSuffix(it); label != "" {
-		s += " (" + label + ")"
+		s += " (" + html.EscapeString(label) + ")"
 	}
 
 	if len(it.Flags) > 0 {
 		words := make([]string, 0, len(it.Flags))
 		for _, h := range it.Flags {
-			words = append(words, h.Word)
+			words = append(words, "<b>"+html.EscapeString(h.Word)+"</b>")
 		}
 		s += " — " + strings.Join(words, ", ")
 	}
 
 	if it.Selection != "" {
-		s += "\n    ↳ " + it.Selection
+		s += "\n    ↳ " + html.EscapeString(it.Selection)
 	}
 
 	return s

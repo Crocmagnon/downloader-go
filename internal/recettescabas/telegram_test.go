@@ -40,7 +40,7 @@ func TestSendWithKeyboard(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := (*calls)[0]
-	for _, want := range []string{`"chat_id":42`, `"text":"salut"`, `"inline_keyboard":[[{"text":"✅2","callback_data":"t:2"}]]`} {
+	for _, want := range []string{`"chat_id":42`, `"text":"salut"`, `"inline_keyboard":[[{"text":"✅2","callback_data":"t:2"}]]`, `"parse_mode":"HTML"`} {
 		if c.Method != "sendMessage" || !strings.Contains(c.Body, want) {
 			t.Errorf("call = %+v, missing %s", c, want)
 		}
@@ -67,6 +67,18 @@ func TestSendAlbum(t *testing.T) {
 	c := (*calls)[0]
 	want := `"media":[{"type":"photo","media":"https://x/1.webp","caption":"1. Wok"},{"type":"photo","media":"https://x/2.webp","caption":"2. Filet"}]`
 	if c.Method != "sendMediaGroup" || !strings.Contains(c.Body, want) || !strings.Contains(c.Body, `"chat_id":42`) {
+		t.Errorf("call = %+v", c)
+	}
+}
+
+func TestEditMarkup(t *testing.T) {
+	tg, calls := fakeTelegram(t, `{}`)
+	kb := [][]Button{{{Text: "➕3", CallbackData: "t:3"}}}
+	if err := tg.EditMarkup(context.Background(), 42, 7, kb); err != nil {
+		t.Fatal(err)
+	}
+	c := (*calls)[0]
+	if c.Method != "editMessageReplyMarkup" || !strings.Contains(c.Body, `"message_id":7`) || !strings.Contains(c.Body, "➕3") || strings.Contains(c.Body, `"text":"x"`) {
 		t.Errorf("call = %+v", c)
 	}
 }

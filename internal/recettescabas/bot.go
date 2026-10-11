@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"strconv"
 	"strings"
@@ -160,9 +161,9 @@ func (s Service) callback(ctx context.Context, q *CallbackQuery) {
 			return
 		}
 
-		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, msg.Text, Toggle(kb, n)))
+		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, Toggle(kb, n)))
 	case q.Data == cbCancel:
-		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, msg.Text, Reset(kb)))
+		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, Reset(kb)))
 	case q.Data == cbValidate:
 		s.validate(ctx, msg, kb)
 	}
@@ -174,17 +175,17 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 		return
 	}
 
-	s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, "⏳ application…", nil))
+	s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, [][]Button{{{Text: "⏳ application…", CallbackData: cbBusy}}}))
 
 	// An empty week (unexpected message text) never matches the site's: nothing is applied.
 	p, err := s.Apply(ctx, weekRe.FindString(msg.Text), desired)
 
 	switch {
 	case errors.Is(err, ErrWeekChanged):
-		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID,
-			msg.Text+"\n\n⚠️ La semaine a changé : rien n'a été appliqué. Utilise /recap.", nil))
+		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, nil))
+		s.report(s.TG.Send(ctx, s.ChatID, "⚠️ La semaine a changé : rien n'a été appliqué. Utilise /recap.", nil))
 	case err != nil:
-		s.report(s.TG.Edit(ctx, s.ChatID, msg.MessageID, msg.Text, kb))
+		s.report(s.TG.EditMarkup(ctx, s.ChatID, msg.MessageID, kb))
 		s.fail(ctx, err)
 	default:
 		p = Annotate(p, s.Config)
@@ -202,7 +203,7 @@ func (s Service) fail(ctx context.Context, err error) {
 		msg = string(r[:maxFailRunes]) + "…"
 	}
 
-	s.report(s.TG.Send(ctx, s.ChatID, "❌ échec : "+msg, nil))
+	s.report(s.TG.Send(ctx, s.ChatID, "❌ échec : "+html.EscapeString(msg), nil))
 }
 
 func (s Service) report(err error) {

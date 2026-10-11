@@ -17,6 +17,7 @@ const (
 	cbToggle   = "t:"
 	cbValidate = "v"
 	cbCancel   = "x"
+	cbBusy     = "-" // "⏳ application…" placeholder, ignored
 	perRow     = 5
 )
 
@@ -26,12 +27,13 @@ type cell struct {
 	n        int
 	selected bool
 	pending  bool
+	flags    string // flag emojis, shown after the number
 }
 
 func NewKeyboard(items []Item) [][]Button {
 	cells := make([]cell, 0, len(items))
 	for _, it := range items {
-		cells = append(cells, cell{n: it.N, selected: it.Selected})
+		cells = append(cells, cell{n: it.N, selected: it.Selected, flags: emojis(it)})
 	}
 
 	return build(cells)
@@ -74,7 +76,9 @@ func build(cells []cell) [][]Button {
 
 	pending := 0
 	for i, c := range cells {
-		if i%perRow == 0 {
+		// Options start on their own row.
+		newOptions := c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN)
+		if len(rows) == 0 || len(rows[len(rows)-1]) == perRow || newOptions {
 			rows = append(rows, nil)
 		}
 		rows[len(rows)-1] = append(rows[len(rows)-1], Button{Text: label(c), CallbackData: cbToggle + strconv.Itoa(c.n)})
@@ -95,7 +99,7 @@ func build(cells []cell) [][]Button {
 }
 
 func label(c cell) string {
-	n := strconv.Itoa(c.n)
+	n := strconv.Itoa(c.n) + c.flags
 
 	switch {
 	case c.selected && c.pending:
@@ -124,7 +128,8 @@ func cellsOf(kb [][]Button) []cell {
 				continue
 			}
 
-			c := cell{n: n}
+			_, flags, _ := strings.Cut(b.Text, nStr)
+			c := cell{n: n, flags: flags}
 			switch {
 			case strings.HasPrefix(b.Text, "➖"):
 				c.selected, c.pending = true, true

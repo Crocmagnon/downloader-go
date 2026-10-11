@@ -67,16 +67,19 @@ func TestRecapText(t *testing.T) {
 		},
 	}
 
-	want := `🧺 Semaine du 19/10/2026 · modifiable jusqu'au Jeudi 15 Octobre 2026 à 23h00
+	want := `<b>🧺 Semaine du 19/10/2026</b>
+Modifiable jusqu'au Jeudi 15 Octobre 2026 à 23h00
 Panier à cuisiner 4 pers. · 102,25 €
 ⚠️ Sélection : 🍄 9
 
-✅ Sélection
+<b>✅ Recettes sélectionnées</b>
 2. Filet mignon (viande 1)
-9. 🍄 Poulet (viande 2) — champignons
+9. 🍄 Poulet (viande 2) — <b>champignons</b>
 
-➕ Disponibles
-1. 🍄 Gratin (top chrono) — champignons
+<b>➕ Recettes disponibles</b>
+1. 🍄 Gratin (top chrono) — <b>champignons</b>
+
+<b>➕ Options disponibles</b>
 10. Tarte (Kit dessert (12.95€))`
 
 	if got := RecapText(p); got != want {
@@ -87,14 +90,21 @@ Panier à cuisiner 4 pers. · 102,25 €
 func TestRecapTextWithoutPriceNorAlert(t *testing.T) {
 	p := Page{Week: "19/10/2026", Deadline: "Jeudi", People: "4 pers.", Items: []Item{{N: 2, Name: "Filet", Label: "viande 1", Selected: true}}}
 	got := RecapText(p)
-	if strings.Contains(got, "€") || strings.Contains(got, "⚠️") || strings.Contains(got, "Disponibles") {
+	if strings.Contains(got, "€") || strings.Contains(got, "⚠️") || strings.Contains(got, "disponibles") || strings.Contains(got, "Options") {
 		t.Errorf("unexpected content:\n%s", got)
+	}
+}
+
+func TestRecapTextEscapesHTML(t *testing.T) {
+	p := Page{Week: "19/10/2026", Deadline: "Jeudi", People: "4 pers.", Items: []Item{{N: 2, Name: "Pâtes & <fromage>", Label: "viande 1", Selected: true}}}
+	if got := RecapText(p); !strings.Contains(got, "2. Pâtes &amp; &lt;fromage&gt; (viande 1)") {
+		t.Errorf("RecapText =\n%s", got)
 	}
 }
 
 func TestDetailText(t *testing.T) {
 	it := Item{N: 6, Name: "Quiche", Label: "protéinée", Ingredients: "poireaux ; salade verte", Flags: []Hit{{"🥗", "salade"}}}
-	want := "6. 🥗 Quiche (protéinée) — salade\n\npoireaux ; salade verte"
+	want := "6. 🥗 Quiche (protéinée) — <b>salade</b>\n\npoireaux ; salade verte"
 	if got := DetailText(it); got != want {
 		t.Errorf("DetailText = %q, want %q", got, want)
 	}

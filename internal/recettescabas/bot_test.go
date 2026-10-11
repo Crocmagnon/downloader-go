@@ -109,7 +109,7 @@ func TestToggleCallbackEditsKeyboardOnly(t *testing.T) {
 		t.Errorf("first call = %s, want answerCallbackQuery", (*calls)[0].Method)
 	}
 	c := last(calls)
-	if c.Method != "editMessageText" || !strings.Contains(c.Body, "➕3") || !strings.Contains(c.Body, "Valider (1)") {
+	if c.Method != "editMessageReplyMarkup" || !strings.Contains(c.Body, "➕3") || !strings.Contains(c.Body, "Valider (1)") {
 		t.Errorf("call = %+v", c)
 	}
 	if f.fetches != 0 || f.applyWanted != nil {
@@ -147,9 +147,13 @@ func TestValidateWeekChanged(t *testing.T) {
 	f.applyErr = ErrWeekChanged
 	s.handle(context.Background(), callback(cbValidate, recapMessage(Toggle(NewKeyboard(botPage().Items), 3))))
 
-	c := last(calls)
-	if c.Method != "editMessageText" || !strings.Contains(c.Body, "La semaine a changé") || strings.Contains(c.Body, "inline_keyboard") {
-		t.Errorf("final edit = %+v", c)
+	var warned, removed bool
+	for _, c := range *calls {
+		warned = warned || (c.Method == "sendMessage" && strings.Contains(c.Body, "La semaine a changé"))
+		removed = removed || (c.Method == "editMessageReplyMarkup" && !strings.Contains(c.Body, "inline_keyboard"))
+	}
+	if !warned || !removed {
+		t.Errorf("warned = %v, keyboard removed = %v, calls = %+v", warned, removed, *calls)
 	}
 }
 
@@ -160,11 +164,19 @@ func TestValidateFailureRestoresKeyboard(t *testing.T) {
 
 	var restored, reported bool
 	for _, c := range *calls {
-		restored = restored || (c.Method == "editMessageText" && strings.Contains(c.Body, "➕3"))
+		restored = restored || (c.Method == "editMessageReplyMarkup" && strings.Contains(c.Body, "➕3"))
 		reported = reported || (c.Method == "sendMessage" && strings.Contains(c.Body, "❌ échec : boom"))
 	}
 	if !restored || !reported {
 		t.Errorf("restored = %v, reported = %v, calls = %+v", restored, reported, *calls)
+	}
+}
+
+func TestFailMessageEscapesHTML(t *testing.T) {
+	s, _, calls, _ := newService(t)
+	s.fail(context.Background(), errors.New("a <b> & c"))
+	if c := last(calls); !strings.Contains(c.Body, "a &lt;b&gt; &amp; c") {
+		t.Errorf("body = %s", c.Body)
 	}
 }
 

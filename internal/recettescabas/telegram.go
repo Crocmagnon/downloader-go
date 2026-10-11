@@ -13,7 +13,10 @@ import (
 	"time"
 )
 
-const pollTimeout = 50 // seconds, Telegram long polling
+const (
+	pollTimeout = 50     // seconds, Telegram long polling
+	parseMode   = "HTML" // message texts are HTML: escape what comes from the site
+)
 
 // Telegram is a minimal Bot API client.
 type Telegram struct {
@@ -80,8 +83,9 @@ func (t Telegram) Send(ctx context.Context, chatID int64, text string, kb [][]Bu
 	return t.call(ctx, "sendMessage", struct {
 		ChatID      int64   `json:"chat_id"`
 		Text        string  `json:"text"`
+		ParseMode   string  `json:"parse_mode"`
 		ReplyMarkup *Markup `json:"reply_markup,omitzero"`
-	}{chatID, text, markup(kb)}, nil)
+	}{chatID, text, parseMode, markup(kb)}, nil)
 }
 
 // Photo is one picture of an album, sent by URL.
@@ -115,8 +119,19 @@ func (t Telegram) Edit(ctx context.Context, chatID int64, messageID int, text st
 		ChatID      int64   `json:"chat_id"`
 		MessageID   int     `json:"message_id"`
 		Text        string  `json:"text"`
+		ParseMode   string  `json:"parse_mode"`
 		ReplyMarkup *Markup `json:"reply_markup,omitzero"`
-	}{chatID, messageID, text, markup(kb)}, nil)
+	}{chatID, messageID, text, parseMode, markup(kb)}, nil)
+}
+
+// EditMarkup replaces only a message's keyboard, keeping its formatted text: a callback
+// only gives back the plain text. A nil kb removes the keyboard.
+func (t Telegram) EditMarkup(ctx context.Context, chatID int64, messageID int, kb [][]Button) error {
+	return t.call(ctx, "editMessageReplyMarkup", struct {
+		ChatID      int64   `json:"chat_id"`
+		MessageID   int     `json:"message_id"`
+		ReplyMarkup *Markup `json:"reply_markup,omitzero"`
+	}{chatID, messageID, markup(kb)}, nil)
 }
 
 func (t Telegram) Answer(ctx context.Context, callbackID string) error {
