@@ -96,6 +96,15 @@ func TestExtract(t *testing.T) {
 		if !strings.Contains(r2.Pantry, "huile d'olive") || strings.Contains(r2.Pantry, "pommes") {
 			t.Errorf("recipe 2 pantry = %q", r2.Pantry)
 		}
+		// The site's boilerplate sometimes sits in the same paragraph as the ingredients.
+		if got := item(t, p, 5).Ingredients; strings.Contains(got, "Nos recettes") || !strings.HasSuffix(got, "noix") {
+			t.Errorf("recipe 5 ingredients = %q", got)
+		}
+		for _, n := range []int{11, 20} {
+			if got := item(t, p, n).Ingredients; got != "" {
+				t.Errorf("option %d ingredients = %q, want only boilerplate stripped to empty", n, got)
+			}
+		}
 		if r4 := item(t, p, 4); !strings.Contains(r4.Ingredients, "champignons de Paris") {
 			t.Errorf("recipe 4 ingredients = %q", r4.Ingredients)
 		}

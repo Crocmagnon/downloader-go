@@ -125,6 +125,18 @@ func Extract(page playwright.Page) (Page, error) {
 	return parse(raw)
 }
 
+// boilerplate starts the site's generic sourcing text, sometimes in the same paragraph as the
+// ingredients and alone in the options' "Ingrédients du cabas".
+var boilerplate = []string{"Nos recettes sont fournies", "Les recettes qui comportent"}
+
+func stripBoilerplate(s string) string {
+	for _, b := range boilerplate {
+		s, _, _ = strings.Cut(s, b)
+	}
+
+	return strings.TrimSpace(s)
+}
+
 func parse(raw rawPage) (Page, error) {
 	week := weekRe.FindString(raw.Week)
 	if week == "" {
@@ -138,7 +150,7 @@ func parse(raw rawPage) (Page, error) {
 	for _, r := range raw.Items {
 		it := Item{
 			InputID: r.InputID, Name: r.Name, Label: r.Label,
-			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients, Pantry: r.Pantry, Selection: r.Selection, Image: r.Image,
+			Option: r.Option, Selected: r.Selected, Ingredients: stripBoilerplate(r.Ingredients), Pantry: r.Pantry, Selection: r.Selection, Image: r.Image,
 		}
 
 		if r.Option {
