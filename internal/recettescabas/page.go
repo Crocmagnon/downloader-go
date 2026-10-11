@@ -27,6 +27,7 @@ type Item struct {
 	Selected    bool
 	Ingredients string
 	Selection   string // "this week's selection" of an option (fruits, cheeses…), if any
+	Image       string // photo URL, recipes only
 	Flags       []Hit  // set by Annotate
 }
 
@@ -70,6 +71,7 @@ const extractJS = `() => {
         return {
           inputId: input.id,
           selection: text(weekly && weekly.querySelector('strong, b')),
+          image: span.closest('li')?.querySelector('img.recette')?.src ?? '',
           name: text(link),
           label: text(document.querySelector('label[for="' + input.id + '"]')),
           option: span.dataset.ref === 'Option',
@@ -88,6 +90,7 @@ type rawItem struct {
 	Selected    bool   `json:"selected"`
 	Ingredients string `json:"ingredients"`
 	Selection   string `json:"selection"`
+	Image       string `json:"image"`
 }
 
 type rawPage struct {
@@ -131,7 +134,7 @@ func parse(raw rawPage) (Page, error) {
 	for _, r := range raw.Items {
 		it := Item{
 			InputID: r.InputID, Name: r.Name, Label: r.Label,
-			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients, Selection: r.Selection,
+			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients, Selection: r.Selection, Image: r.Image,
 		}
 
 		if r.Option {

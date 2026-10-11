@@ -15,8 +15,8 @@ func botPage() Page {
 	return Page{
 		Week: "19/10/2026", Deadline: "Jeudi 15 Octobre 2026 à 23h00", People: "4 pers.",
 		Items: []Item{
-			{N: 1, Name: "Gratin", Label: "top chrono", Ingredients: "champignons de Paris"},
-			{N: 2, Name: "Filet", Label: "viande 1", Selected: true, Ingredients: "porc"},
+			{N: 1, Name: "Gratin", Label: "top chrono", Ingredients: "champignons de Paris", Image: "https://x/1.webp"},
+			{N: 2, Name: "Filet", Label: "viande 1", Selected: true, Ingredients: "porc", Image: "https://x/2.webp"},
 			{N: 3, Name: "Poisson", Label: "poisson", Ingredients: "cabillaud"},
 		},
 	}
@@ -70,6 +70,19 @@ func TestSendRecap(t *testing.T) {
 		if c.Method != "sendMessage" || !strings.Contains(c.Body, want) {
 			t.Errorf("call = %+v, missing %s", c, want)
 		}
+	}
+}
+
+func TestSendRecapSendsRecipeAlbumFirst(t *testing.T) {
+	s, _, calls, _ := newService(t)
+	if err := s.SendRecap(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(*calls) != 2 || (*calls)[0].Method != "sendMediaGroup" || (*calls)[1].Method != "sendMessage" {
+		t.Fatalf("calls = %+v", *calls)
+	}
+	if body := (*calls)[0].Body; !strings.Contains(body, `"caption":"1. Gratin"`) || !strings.Contains(body, "https://x/2.webp") {
+		t.Errorf("album = %s", body)
 	}
 }
 

@@ -29,7 +29,8 @@ func withFixture(t *testing.T, fn func(playwright.Page)) {
 	t.Chdir(t.TempDir()) // pw.Run writes cookies.json in the working directory
 
 	err = pw.Run(io.Discard, io.Discard, true, pw.BrowserDefault, func(page playwright.Page) error {
-		if _, err := page.Goto("file://" + fixture); err != nil {
+		// The fixture's images are remote: don't wait for them.
+		if _, err := page.Goto("file://"+fixture, playwright.PageGotoOptions{WaitUntil: playwright.WaitUntilStateDomcontentloaded}); err != nil {
 			return err
 		}
 		fn(page)
@@ -107,6 +108,13 @@ func TestExtract(t *testing.T) {
 		}
 		if got := item(t, p, 10).Selection; got != "" {
 			t.Errorf("option 10 selection = %q, want empty", got)
+		}
+
+		if got := r2.Image; got != "https://www.recettesetcabas.com/data/recettes/5320-1-default@6AC4AE4B.webp" {
+			t.Errorf("recipe 2 image = %q", got)
+		}
+		if got := item(t, p, 10).Image; got != "" {
+			t.Errorf("option 10 image = %q, want none (recipes only)", got)
 		}
 
 		o10 := item(t, p, 10)

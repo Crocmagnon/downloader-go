@@ -15,6 +15,12 @@ var ErrWeekChanged = errors.New("week changed")
 
 const maxFailRunes = 300
 
+// Telegram albums hold 2 to 10 items.
+const (
+	minAlbum = 2
+	maxAlbum = 10
+)
+
 const helpText = "/recap — renvoie le récap de la semaine\n/detail N — ingrédients de l'élément N"
 
 type Service struct {
@@ -36,6 +42,17 @@ func (s Service) SendRecap(ctx context.Context) error {
 	}
 
 	p = Annotate(p, s.Config)
+
+	// Recipe photos first, as an album; the recap stays usable without them.
+	var photos []Photo
+	for _, it := range p.Items {
+		if it.Image != "" {
+			photos = append(photos, Photo{URL: it.Image, Caption: fmt.Sprintf("%d. %s", it.N, it.Name)})
+		}
+	}
+	if len(photos) >= minAlbum {
+		s.report(s.TG.SendAlbum(ctx, s.ChatID, photos[:min(len(photos), maxAlbum)]))
+	}
 
 	return s.TG.Send(ctx, s.ChatID, RecapText(p), NewKeyboard(p.Items))
 }

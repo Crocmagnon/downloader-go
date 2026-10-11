@@ -58,6 +58,19 @@ func TestURLButtonHasNoCallbackData(t *testing.T) {
 	}
 }
 
+func TestSendAlbum(t *testing.T) {
+	tg, calls := fakeTelegram(t, `[]`)
+	photos := []Photo{{URL: "https://x/1.webp", Caption: "1. Wok"}, {URL: "https://x/2.webp", Caption: "2. Filet"}}
+	if err := tg.SendAlbum(context.Background(), 42, photos); err != nil {
+		t.Fatal(err)
+	}
+	c := (*calls)[0]
+	want := `"media":[{"type":"photo","media":"https://x/1.webp","caption":"1. Wok"},{"type":"photo","media":"https://x/2.webp","caption":"2. Filet"}]`
+	if c.Method != "sendMediaGroup" || !strings.Contains(c.Body, want) || !strings.Contains(c.Body, `"chat_id":42`) {
+		t.Errorf("call = %+v", c)
+	}
+}
+
 func TestEditWithoutKeyboardOmitsMarkup(t *testing.T) {
 	tg, calls := fakeTelegram(t, `{}`)
 	if err := tg.Edit(context.Background(), 42, 7, "⏳", nil); err != nil {

@@ -84,6 +84,31 @@ func (t Telegram) Send(ctx context.Context, chatID int64, text string, kb [][]Bu
 	}{chatID, text, markup(kb)}, nil)
 }
 
+// Photo is one picture of an album, sent by URL.
+type Photo struct {
+	URL     string
+	Caption string
+}
+
+// SendAlbum sends 2 to 10 photos as one album.
+func (t Telegram) SendAlbum(ctx context.Context, chatID int64, photos []Photo) error {
+	type media struct {
+		Type    string `json:"type"`
+		Media   string `json:"media"`
+		Caption string `json:"caption,omitzero"`
+	}
+
+	items := make([]media, 0, len(photos))
+	for _, p := range photos {
+		items = append(items, media{Type: "photo", Media: p.URL, Caption: p.Caption})
+	}
+
+	return t.call(ctx, "sendMediaGroup", struct {
+		ChatID int64   `json:"chat_id"`
+		Media  []media `json:"media"`
+	}{chatID, items}, nil)
+}
+
 // Edit replaces a message's text and keyboard; a nil kb removes the keyboard.
 func (t Telegram) Edit(ctx context.Context, chatID int64, messageID int, text string, kb [][]Button) error {
 	return t.call(ctx, "editMessageText", struct {
