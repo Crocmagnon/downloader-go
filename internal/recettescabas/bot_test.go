@@ -109,7 +109,7 @@ func TestToggleCallbackEditsKeyboardOnly(t *testing.T) {
 		t.Errorf("first call = %s, want answerCallbackQuery", (*calls)[0].Method)
 	}
 	c := last(calls)
-	if c.Method != "editMessageReplyMarkup" || !strings.Contains(c.Body, "➕3") || !strings.Contains(c.Body, "Valider (1)") {
+	if c.Method != "editMessageReplyMarkup" || !strings.Contains(c.Body, "➕ 3. Poisson") || !strings.Contains(c.Body, "Valider (1)") {
 		t.Errorf("call = %+v", c)
 	}
 	if f.fetches != 0 || f.applyWanted != nil {
@@ -137,7 +137,7 @@ func TestValidateAppliesAndShowsNewRecap(t *testing.T) {
 		t.Errorf("apply(%q, %v)", f.applyWeek, f.applyWanted)
 	}
 	c := last(calls)
-	if c.Method != "editMessageText" || !strings.Contains(c.Body, "✅3") || strings.Contains(c.Body, "Valider") {
+	if c.Method != "editMessageText" || !strings.Contains(c.Body, "✅ 3. Poisson") || strings.Contains(c.Body, "Valider") {
 		t.Errorf("final edit = %+v", c)
 	}
 }
@@ -164,7 +164,7 @@ func TestValidateFailureRestoresKeyboard(t *testing.T) {
 
 	var restored, reported bool
 	for _, c := range *calls {
-		restored = restored || (c.Method == "editMessageReplyMarkup" && strings.Contains(c.Body, "➕3"))
+		restored = restored || (c.Method == "editMessageReplyMarkup" && strings.Contains(c.Body, "➕ 3. Poisson"))
 		reported = reported || (c.Method == "sendMessage" && strings.Contains(c.Body, "❌ échec : boom"))
 	}
 	if !restored || !reported {

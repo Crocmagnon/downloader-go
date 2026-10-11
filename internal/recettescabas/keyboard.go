@@ -19,7 +19,6 @@ const (
 	cbCancel   = "x"
 	cbBusy     = "-" // "⏳ application…" placeholder, ignored
 	cbDetail   = "d:"
-	perRow     = 5
 )
 
 // cell is the state of one item button. The keyboard is the only place pending
@@ -28,7 +27,7 @@ type cell struct {
 	n        int
 	selected bool
 	pending  bool
-	flags    string // flag emojis, shown after the number
+	title    string // what follows the number: ". 🍄 Gratin champignons"
 }
 
 func NewKeyboard(items []Item) [][]Button {
@@ -38,14 +37,14 @@ func NewKeyboard(items []Item) [][]Button {
 // DetailKeyboard lets /detail pick an item with a tap.
 func DetailKeyboard(items []Item) [][]Button {
 	return grid(cellsFrom(items), func(c cell) Button {
-		return Button{Text: strconv.Itoa(c.n) + c.flags, CallbackData: cbDetail + strconv.Itoa(c.n)}
+		return Button{Text: strconv.Itoa(c.n) + c.title, CallbackData: cbDetail + strconv.Itoa(c.n)}
 	})
 }
 
 func cellsFrom(items []Item) []cell {
 	cells := make([]cell, 0, len(items))
 	for _, it := range items {
-		cells = append(cells, cell{n: it.N, selected: it.Selected, flags: emojis(it)})
+		cells = append(cells, cell{n: it.N, selected: it.Selected, title: buttonTitle(it)})
 	}
 
 	return cells
@@ -105,31 +104,37 @@ func build(cells []cell) [][]Button {
 	return append(rows, []Button{{Text: "🌐 Ouvrir sur le site", URL: prefURL}})
 }
 
-// grid lays out one button per cell, perRow per row, options starting on their own row.
+// grid lays out one button per row: titles need the whole width.
 func grid(cells []cell, button func(cell) Button) [][]Button {
-	var rows [][]Button
-
-	for i, c := range cells {
-		newOptions := c.n >= firstOptionN && (i == 0 || cells[i-1].n < firstOptionN)
-		if len(rows) == 0 || len(rows[len(rows)-1]) == perRow || newOptions {
-			rows = append(rows, nil)
-		}
-		rows[len(rows)-1] = append(rows[len(rows)-1], button(c))
+	rows := make([][]Button, 0, len(cells))
+	for _, c := range cells {
+		rows = append(rows, []Button{button(c)})
 	}
 
 	return rows
 }
 
+// buttonTitle renders ". 🍄 Gratin champignons-boulgour": flags, then the name up to its
+// first " - " (the side dish), which Telegram would truncate anyway.
+func buttonTitle(it Item) string {
+	name, _, _ := strings.Cut(it.Name, " - ")
+	if f := emojis(it); f != "" {
+		return ". " + f + " " + name
+	}
+
+	return ". " + name
+}
+
 func label(c cell) string {
-	n := strconv.Itoa(c.n) + c.flags
+	n := strconv.Itoa(c.n) + c.title
 
 	switch {
 	case c.selected && c.pending:
-		return "➖" + n
+		return "➖ " + n
 	case c.selected:
-		return "✅" + n
+		return "✅ " + n
 	case c.pending:
-		return "➕" + n
+		return "➕ " + n
 	default:
 		return n
 	}
@@ -150,8 +155,9 @@ func cellsOf(kb [][]Button) []cell {
 				continue
 			}
 
-			_, flags, _ := strings.Cut(b.Text, nStr)
-			c := cell{n: n, flags: flags}
+			// The state emoji has no digit, so the first nStr is the number.
+			_, title, _ := strings.Cut(b.Text, nStr)
+			c := cell{n: n, title: title}
 			switch {
 			case strings.HasPrefix(b.Text, "➖"):
 				c.selected, c.pending = true, true
