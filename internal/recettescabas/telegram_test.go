@@ -71,6 +71,17 @@ func TestSendAlbum(t *testing.T) {
 	}
 }
 
+func TestSetCommands(t *testing.T) {
+	tg, calls := fakeTelegram(t, `true`)
+	if err := tg.SetCommands(context.Background(), []Command{{"recap", "Récap"}}); err != nil {
+		t.Fatal(err)
+	}
+	c := (*calls)[0]
+	if c.Method != "setMyCommands" || !strings.Contains(c.Body, `"commands":[{"command":"recap","description":"Récap"}]`) {
+		t.Errorf("call = %+v", c)
+	}
+}
+
 func TestEditMarkup(t *testing.T) {
 	tg, calls := fakeTelegram(t, `{}`)
 	kb := [][]Button{{{Text: "➕3", CallbackData: "t:3"}}}

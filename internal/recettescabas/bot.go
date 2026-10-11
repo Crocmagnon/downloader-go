@@ -60,6 +60,12 @@ func (s Service) SendRecap(ctx context.Context) error {
 
 // Run handles updates until ctx is done.
 func (s Service) Run(ctx context.Context) error {
+	// Fills the "/" menu in Telegram; harmless if it fails.
+	s.report(s.TG.SetCommands(ctx, []Command{
+		{Command: "recap", Description: "Récap de la semaine"},
+		{Command: "detail", Description: "Ingrédients d'un élément : /detail 6"},
+	}))
+
 	offset := 0
 
 	for {
@@ -124,7 +130,7 @@ func (s Service) message(ctx context.Context, m *Message) {
 func (s Service) detail(ctx context.Context, arg string) {
 	n, err := strconv.Atoi(strings.TrimSpace(arg))
 	if err != nil {
-		s.report(s.TG.Send(ctx, s.ChatID, "Usage : /detail N", nil))
+		s.report(s.TG.Send(ctx, s.ChatID, "Usage : /detail N, par exemple /detail 6", nil))
 		return
 	}
 

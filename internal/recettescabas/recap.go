@@ -19,7 +19,7 @@ func Annotate(p Page, cfg Config) Page {
 
 		it.Flags = nil
 		for _, f := range cfg.Flags {
-			if word := match(it.Ingredients, f.Keywords); word != "" {
+			if word := match(it.Ingredients+" ; "+it.Pantry, f.Keywords); word != "" {
 				it.Flags = append(it.Flags, Hit{Emoji: f.Emoji, Word: word})
 			}
 		}
@@ -74,12 +74,21 @@ func RecapText(p Page) string {
 }
 
 func DetailText(it Item) string {
-	ingredients := it.Ingredients
-	if ingredients == "" {
-		ingredients = "(pas d'ingrédients indiqués)"
+	s := line(it)
+	for _, b := range []struct{ title, text string }{
+		{"Ingrédients du cabas", it.Ingredients},
+		{"Ingrédients du placard", it.Pantry},
+	} {
+		if b.text != "" {
+			s += "\n\n<b>" + b.title + "</b>\n" + html.EscapeString(b.text)
+		}
 	}
 
-	return line(it) + "\n\n" + html.EscapeString(ingredients)
+	if it.Ingredients == "" && it.Pantry == "" {
+		s += "\n\n(pas d'ingrédients indiqués)"
+	}
+
+	return s
 }
 
 // line renders "9. 🍄 Poulet (viande 2) — <b>champignons</b>" as HTML.

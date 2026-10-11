@@ -113,6 +113,16 @@ func (t Telegram) SendAlbum(ctx context.Context, chatID int64, photos []Photo) e
 	}{chatID, items}, nil)
 }
 
+// Command is an entry of the bot's "/" menu.
+type Command struct {
+	Command     string `json:"command"`
+	Description string `json:"description"`
+}
+
+func (t Telegram) SetCommands(ctx context.Context, commands []Command) error {
+	return t.call(ctx, "setMyCommands", map[string]any{"commands": commands}, nil)
+}
+
 // Edit replaces a message's text and keyboard; a nil kb removes the keyboard.
 func (t Telegram) Edit(ctx context.Context, chatID int64, messageID int, text string, kb [][]Button) error {
 	return t.call(ctx, "editMessageText", struct {

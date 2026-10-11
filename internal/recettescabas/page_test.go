@@ -90,8 +90,11 @@ func TestExtract(t *testing.T) {
 		if r2.Name != "Filet mignon aux pommes - pommes de terre" || r2.Label != "viande 1" || r2.InputID != "rtype_23" || r2.Option {
 			t.Errorf("recipe 2 = %+v", r2)
 		}
-		if !strings.Contains(r2.Ingredients, "pommes à cuire") {
+		if !strings.Contains(r2.Ingredients, "pommes à cuire") || strings.Contains(r2.Ingredients, "huile") {
 			t.Errorf("recipe 2 ingredients = %q", r2.Ingredients)
+		}
+		if !strings.Contains(r2.Pantry, "huile d'olive") || strings.Contains(r2.Pantry, "pommes") {
+			t.Errorf("recipe 2 pantry = %q", r2.Pantry)
 		}
 		if r4 := item(t, p, 4); !strings.Contains(r4.Ingredients, "champignons de Paris") {
 			t.Errorf("recipe 4 ingredients = %q", r4.Ingredients)

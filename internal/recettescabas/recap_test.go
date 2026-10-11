@@ -48,6 +48,13 @@ func TestAnnotate(t *testing.T) {
 	}
 }
 
+func TestAnnotateMatchesPantryToo(t *testing.T) {
+	p := Page{Items: []Item{{N: 1, Ingredients: "riz", Pantry: "salade verte"}}}
+	if got := Annotate(p, testConfig()).Items[0].Flags; !slices.Equal(got, []Hit{{"🥗", "salade"}}) {
+		t.Errorf("flags = %+v", got)
+	}
+}
+
 func TestAnnotateWithoutRulesFlagsNothing(t *testing.T) {
 	p := Page{Items: []Item{{N: 1, Ingredients: "champignons de Paris"}}}
 	if got := Annotate(p, Config{}); len(got.Items[0].Flags) != 0 {
@@ -103,8 +110,8 @@ func TestRecapTextEscapesHTML(t *testing.T) {
 }
 
 func TestDetailText(t *testing.T) {
-	it := Item{N: 6, Name: "Quiche", Label: "protéinée", Ingredients: "poireaux ; salade verte", Flags: []Hit{{"🥗", "salade"}}}
-	want := "6. 🥗 Quiche (protéinée) — <b>salade</b>\n\npoireaux ; salade verte"
+	it := Item{N: 6, Name: "Quiche", Label: "protéinée", Ingredients: "poireaux ; salade verte", Pantry: "sel & poivre", Flags: []Hit{{"🥗", "salade"}}}
+	want := "6. 🥗 Quiche (protéinée) — <b>salade</b>\n\n<b>Ingrédients du cabas</b>\npoireaux ; salade verte\n\n<b>Ingrédients du placard</b>\nsel &amp; poivre"
 	if got := DetailText(it); got != want {
 		t.Errorf("DetailText = %q, want %q", got, want)
 	}

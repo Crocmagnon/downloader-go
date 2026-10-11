@@ -25,7 +25,8 @@ type Item struct {
 	Label       string
 	Option      bool
 	Selected    bool
-	Ingredients string
+	Ingredients string // "Ingrédients du cabas"
+	Pantry      string // "Ingrédients du placard"
 	Selection   string // "this week's selection" of an option (fruits, cheeses…), if any
 	Image       string // photo URL, recipes only
 	Flags       []Hit  // set by Annotate
@@ -62,10 +63,11 @@ const extractJS = `() => {
         const input = span.querySelector('input[type=checkbox]');
         const link = span.querySelector('a[data-src]');
         const detail = link && document.querySelector(link.dataset.src);
-        const ingredients = detail ? [...detail.querySelectorAll('.h5')]
-          .filter(h => h.textContent.includes('Ingrédients'))
-          .map(h => text(h.nextElementSibling))
-          .join(' ; ') : '';
+        // The text following the detail's "Ingrédients du cabas" / "du placard" heading.
+        const block = title => {
+          const h = detail && [...detail.querySelectorAll('.h5')].find(h => h.textContent.includes(title));
+          return text(h && h.nextElementSibling);
+        };
         const weekly = detail && [...detail.querySelectorAll('header p')]
           .find(p => p.textContent.toLowerCase().includes('lection de la semaine'));
         return {
@@ -76,7 +78,8 @@ const extractJS = `() => {
           label: text(document.querySelector('label[for="' + input.id + '"]')),
           option: span.dataset.ref === 'Option',
           selected: input.checked,
-          ingredients,
+          ingredients: block('Ingrédients du cabas'),
+          pantry: block('Ingrédients du placard'),
         };
       }),
   };
@@ -89,6 +92,7 @@ type rawItem struct {
 	Option      bool   `json:"option"`
 	Selected    bool   `json:"selected"`
 	Ingredients string `json:"ingredients"`
+	Pantry      string `json:"pantry"`
 	Selection   string `json:"selection"`
 	Image       string `json:"image"`
 }
@@ -134,7 +138,7 @@ func parse(raw rawPage) (Page, error) {
 	for _, r := range raw.Items {
 		it := Item{
 			InputID: r.InputID, Name: r.Name, Label: r.Label,
-			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients, Selection: r.Selection, Image: r.Image,
+			Option: r.Option, Selected: r.Selected, Ingredients: r.Ingredients, Pantry: r.Pantry, Selection: r.Selection, Image: r.Image,
 		}
 
 		if r.Option {
