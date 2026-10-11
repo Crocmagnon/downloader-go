@@ -175,3 +175,12 @@ func TestDetail(t *testing.T) {
 		}
 	}
 }
+
+func TestFailMessageIsShort(t *testing.T) {
+	s, _, calls, _ := newService(t)
+	s.fail(context.Background(), errors.New("boom: "+strings.Repeat("x", 5000)+"\nCall log:\n  - waiting for locator"))
+	c := last(calls)
+	if c.Method != "sendMessage" || !strings.Contains(c.Body, "❌ échec : boom") || strings.Contains(c.Body, "Call log") || len(c.Body) > 1000 {
+		t.Errorf("call = %s %d bytes", c.Method, len(c.Body))
+	}
+}

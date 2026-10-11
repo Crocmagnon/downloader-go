@@ -107,3 +107,14 @@ func TestTransportErrorDoesNotLeakToken(t *testing.T) {
 		t.Errorf("error leaks the bot token: %v", err)
 	}
 }
+
+func TestBadTokenErrorDoesNotLeakToken(t *testing.T) {
+	tg := NewTelegram("SECRET\n")
+	err := tg.Send(context.Background(), 1, "x", nil)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	if strings.Contains(err.Error(), "SECRET") {
+		t.Errorf("error leaks the bot token: %v", err)
+	}
+}

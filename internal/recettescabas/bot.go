@@ -13,6 +13,8 @@ import (
 // ErrWeekChanged is returned by Apply when the site shows another week than the recap.
 var ErrWeekChanged = errors.New("week changed")
 
+const maxFailRunes = 300
+
 const helpText = "/recap — renvoie le récap de la semaine\n/detail N — ingrédients de l'élément N"
 
 type Service struct {
@@ -173,9 +175,17 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 	}
 }
 
+// fail logs err and sends its first line to Telegram, shortened: Playwright errors
+// carry long call logs, and a message over Telegram's limit would not be delivered.
 func (s Service) fail(ctx context.Context, err error) {
 	s.report(err)
-	s.report(s.TG.Send(ctx, s.ChatID, "❌ échec : "+err.Error(), nil))
+
+	msg, _, _ := strings.Cut(err.Error(), "\n")
+	if r := []rune(msg); len(r) > maxFailRunes {
+		msg = string(r[:maxFailRunes]) + "…"
+	}
+
+	s.report(s.TG.Send(ctx, s.ChatID, "❌ échec : "+msg, nil))
 }
 
 func (s Service) report(err error) {

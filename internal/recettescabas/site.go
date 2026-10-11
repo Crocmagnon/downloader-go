@@ -79,12 +79,12 @@ func login(page playwright.Page, username, password string) error {
 	_ = page.GetByText("Continuer sans accepter").Click(playwright.LocatorClickOptions{Timeout: playwright.Float(cookieTimeoutMs)})
 
 	email := page.Locator("input[placeholder='Email']:visible").First()
-	if err := email.Fill(username); err != nil {
-		return fmt.Errorf("typing username: %w", err)
+	if err := fill(email, username, "username"); err != nil {
+		return err
 	}
 
-	if err := page.Locator("input[placeholder='Mot de passe']:visible").First().Fill(password); err != nil {
-		return fmt.Errorf("typing password: %w", err)
+	if err := fill(page.Locator("input[placeholder='Mot de passe']:visible").First(), password, "password"); err != nil {
+		return err
 	}
 
 	if err := page.GetByRole("button", playwright.PageGetByRoleOptions{Name: "Connexion"}).First().Click(); err != nil {
@@ -96,6 +96,16 @@ func login(page playwright.Page, username, password string) error {
 		Timeout: playwright.Float(waitTimeoutMs),
 	}); err != nil {
 		return fmt.Errorf("waiting for login to complete: %w", err)
+	}
+
+	return nil
+}
+
+// fill types value into l. Playwright's error call log echoes the typed value,
+// so the error is replaced: credentials must never reach logs or Telegram.
+func fill(l playwright.Locator, value, what string) error {
+	if err := l.Fill(value); err != nil {
+		return fmt.Errorf("typing %s failed (see screenshot)", what)
 	}
 
 	return nil

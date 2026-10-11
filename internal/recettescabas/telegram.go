@@ -106,18 +106,13 @@ func (t Telegram) call(ctx context.Context, method string, params, result any) e
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, t.BaseURL+"/bot"+t.Token+"/"+method, bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("%s: creating request: %w", method, err)
+		return fmt.Errorf("%s: creating request: %w", method, redact(err))
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := t.HTTP.Do(req)
 	if err != nil {
-		// *url.Error's message contains the URL, which contains the token.
-		if uerr, ok := errors.AsType[*url.Error](err); ok {
-			err = uerr.Err
-		}
-
-		return fmt.Errorf("%s: %w", method, err)
+		return fmt.Errorf("%s: %w", method, redact(err))
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
@@ -145,4 +140,13 @@ func (t Telegram) call(ctx context.Context, method string, params, result any) e
 	}
 
 	return nil
+}
+
+// redact drops the URL of a *url.Error: it contains the bot token.
+func redact(err error) error {
+	if uerr, ok := errors.AsType[*url.Error](err); ok {
+		return uerr.Err
+	}
+
+	return err
 }
