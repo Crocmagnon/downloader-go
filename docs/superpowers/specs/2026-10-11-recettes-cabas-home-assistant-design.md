@@ -164,12 +164,13 @@ Les règles du `CLAUDE.md` du dossier HA s'appliquent, notamment :
 ### `packages/recettes_cabas.yaml` (écrit via `ha_config_set_yaml`)
 
 - **`template:`** : un bloc déclenché par un webhook, avec
-  `webhook_id: !secret recettes_cabas_webhook_id`. `local_only` dépend du test réseau (voir
-  plus bas).
+  `webhook_id: !secret recettes_cabas_webhook_id` et `local_only: false` (voir plus bas).
   - `sensor.recettes_cabas` (global) :
     - état : la semaine ;
     - attributs : `deadline`, `people`, `price`, `alerts`, et `numbers` (la liste des numéros
-      présents cette semaine, pour le tableau de bord).
+      présents cette semaine, pour le tableau de bord). `price` est suffixé (« 112,25 € ») :
+      HA lit le résultat d'un gabarit comme un littéral Python, et « 112,25 » seul deviendrait
+      le tuple `(112, 25)`.
   - Pour N de 1 à 25 :
     - `sensor.recettes_cabas_N` :
       - état : le nom ;
@@ -181,8 +182,10 @@ Les règles du `CLAUDE.md` du dossier HA s'appliquent, notamment :
   - `unique_id` stables (`recettes_cabas_N`, `recettes_cabas_N_image`), pour que les entités
     soient modifiables dans l'interface.
   - Le bloc est généré une fois (25 emplacements identiques au numéro près) et écrit tel quel.
-    Chaque emplacement lit son élément par
-    `trigger.json["items"] | selectattr("n", "eq", N) | first`.
+    Une variable de bloc indexe les éléments par numéro
+    (`items: "{{ dict(zip(trigger.json['items'] | map(attribute='n'), trigger.json['items'])) }}"`),
+    et chaque emplacement lit `items.get(N, {}).get(...)` : sans avertissement de variable
+    indéfinie quand l'élément est absent.
 - **`recorder:`** : exclusion de `sensor.recettes_cabas*` et `image.recettes_cabas*`. Seul
   l'état courant compte, et les attributs (ingrédients) sont gros.
 
@@ -227,10 +230,10 @@ entités, le webhook, les `rest_command`, l'automatisation, la répartition entr
 
 ## Points à vérifier pendant l'implémentation
 
-- **`local_only` du webhook.** srv-1 pousse vers HA via Tailscale (`100.x`). Si HA considère
-  cette IP comme locale, on garde `local_only: true`. Sinon, `local_only: false` avec un
-  identifiant de webhook aléatoire d'au moins 32 caractères. La décision est consignée dans la
-  doc HA.
+- **`local_only` du webhook : tranché, `false`.** HA juge `request.remote` par
+  `network_util.is_local` (loopback, RFC 1918, `fd00::/8`, link-local) : les IP Tailscale ne
+  sont pas locales, et un appel refusé répond quand même `200`. L'identifiant du webhook est
+  donc aléatoire, 48 caractères hexadécimaux. Consigné dans la doc HA.
 - **Images `.webp`.** Vérifier qu'une entité `image` template sert bien ces images dans
   l'interface et dans l'app mobile.
 - **Taille.** Les attributs d'un emplacement restent petits (moins de 2 Ko). À confirmer sur
