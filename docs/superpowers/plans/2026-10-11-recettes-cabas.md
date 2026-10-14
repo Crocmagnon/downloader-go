@@ -1,5 +1,9 @@
 # Recettes & Cabas Implementation Plan
 
+> **Retired on 2026-10-14.** The Telegram bot and weekly recap this plan built were removed
+> (commit `ad717c5`); the selection is now managed in Home Assistant, see
+> `docs/superpowers/specs/2026-10-11-recettes-cabas-home-assistant-design.md`. Kept as history.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Weekly Telegram recap of the Recettes & Cabas selection with ingredient flags, plus a Telegram bot whose inline buttons stage add/remove changes and apply them on the site.

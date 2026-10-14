@@ -1,5 +1,13 @@
 # Recettes & Cabas : pont avec Home Assistant (sous-projet 1)
 
+> **Telegram retiré le 2026-10-14** (commit `ad717c5`). Ce qui, ici, touche Telegram ne vaut
+> plus : le bot, le récap du mercredi et son timer, le message « ✏️ » après `/apply`, l'usage
+> B « remplacer Telegram pour une autre personne » (Home Assistant le remplace pour tout le
+> foyer). Le pont reste tel que décrit, sauf deux points : il tourne seul, en service
+> `recettes-cabas` (`recettes-cabas serve`), et ses trois réglages sont obligatoires (plus de
+> mode « désactivé »). Les sous-projets 2 (tableau de bord) et 3 (notifications) sont faits
+> dans Home Assistant : la section « Recettes & Cabas » du `CLAUDE.md` du dossier HA les décrit.
+
 ## Objectif
 
 Rendre la sélection Recettes & Cabas utilisable depuis Home Assistant, pour trois usages :

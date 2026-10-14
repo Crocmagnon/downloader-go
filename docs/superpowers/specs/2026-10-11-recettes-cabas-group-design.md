@@ -1,6 +1,8 @@
 # Recettes & Cabas : partager le bot dans un groupe Telegram
 
-État : **à faire plus tard**, décision prise, rien d'implémenté.
+État : **abandonné le 2026-10-14**, jamais implémenté. Telegram a été retiré : le panier se
+partage dans Home Assistant (tableau de bord et notifications sur les deux téléphones), voir
+`2026-10-11-recettes-cabas-home-assistant-design.md`.
 
 ## Besoin
 

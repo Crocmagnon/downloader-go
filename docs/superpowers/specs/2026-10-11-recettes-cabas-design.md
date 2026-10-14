@@ -1,5 +1,11 @@
 # Recettes & Cabas : récap hebdomadaire et bot Telegram
 
+> **Retiré le 2026-10-14.** Le bot Telegram et le récap du mercredi ont été supprimés
+> (commit `ad717c5`) : le panier se gère désormais dans Home Assistant, voir
+> `2026-10-11-recettes-cabas-home-assistant-design.md`. Ce document reste comme historique.
+> Ce qu'il décrit de l'extraction du site, des drapeaux d'ingrédients, des options exclues
+> et de l'application de la sélection est toujours en service, par le pont avec Home Assistant.
+
 ## Objectif
 
 Chaque mercredi, recevoir sur Telegram un récap des recettes et options de la semaine sur
