@@ -13,33 +13,13 @@ import (
 	"time"
 )
 
-const maxAPIBody = 64 << 10
-
-const haHeader = "✏️ Sélection modifiée depuis Home Assistant"
+const (
+	maxAPIBody = 64 << 10
+	// maxFailRunes shortens error answers: Playwright errors carry long call logs.
+	maxFailRunes = 300
+)
 
 var exactWeekRe = regexp.MustCompile(`^\d{2}/\d{2}/\d{4}$`)
-
-// CheckBridge tells whether the Home Assistant bridge is enabled: all of its settings are
-// set, or none. A partial setup is an error, so that a forgotten setting doesn't go unnoticed.
-func CheckBridge(listen, token, webhook string) (bool, error) {
-	var missing []string
-	for _, setting := range []struct{ name, value string }{
-		{"--api-listen", listen}, {"RC_API_TOKEN", token}, {"RC_HA_WEBHOOK_URL", webhook},
-	} {
-		if setting.value == "" {
-			missing = append(missing, setting.name)
-		}
-	}
-
-	switch len(missing) {
-	case 0:
-		return true, nil
-	case 3:
-		return false, nil
-	default:
-		return false, fmt.Errorf("home assistant bridge partially configured, missing %s", strings.Join(missing, ", "))
-	}
-}
 
 // API serves the endpoints Home Assistant calls. Every request needs "Authorization: Bearer <token>".
 func (s Service) API(token string) http.Handler {
@@ -60,9 +40,8 @@ func (s Service) API(token string) http.Handler {
 	})
 }
 
-// StartAPI listens on addr and serves the API in the background until ctx is done.
-// It returns once listening, so that a bad address fails the start.
-func (s Service) StartAPI(ctx context.Context, addr, token string) error {
+// Serve listens on addr and serves the API until ctx is done.
+func (s Service) Serve(ctx context.Context, addr, token string) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("listening on %s: %w", addr, err)
@@ -75,11 +54,9 @@ func (s Service) StartAPI(ctx context.Context, addr, token string) error {
 		_ = srv.Shutdown(context.Background())
 	}()
 
-	go func() {
-		if err := srv.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
-			s.report(err)
-		}
-	}()
+	if err := srv.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
 
 	return nil
 }
@@ -104,10 +81,8 @@ func (s Service) handleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Once applied, the change is announced even if Home Assistant stopped waiting.
-	ctx := context.WithoutCancel(r.Context())
-
-	p, err := s.apply(ctx, req.Week, req.Desired)
+	// Once started, the change is applied and pushed even if Home Assistant stopped waiting.
+	_, err := s.apply(context.WithoutCancel(r.Context()), req.Week, req.Desired)
 	if errors.Is(err, ErrWeekChanged) {
 		http.Error(w, "la semaine a changé : rien n'a été appliqué", http.StatusConflict)
 		return
@@ -117,14 +92,17 @@ func (s Service) handleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.report(s.TG.Send(ctx, s.ChatID, haHeader, nil))
-	s.report(s.sendRecap(ctx, Annotate(p, s.Config)))
-
 	w.WriteHeader(http.StatusOK)
 }
 
-// apiFail logs err and answers with its first line, like the Telegram "❌ échec" message.
+// apiFail logs err and answers with its first line, shortened.
 func (s Service) apiFail(w http.ResponseWriter, err error) {
 	s.report(err)
-	http.Error(w, "échec : "+firstLine(err), http.StatusBadGateway)
+
+	msg, _, _ := strings.Cut(err.Error(), "\n")
+	if r := []rune(msg); len(r) > maxFailRunes {
+		msg = string(r[:maxFailRunes]) + "…"
+	}
+
+	http.Error(w, "échec : "+msg, http.StatusBadGateway)
 }

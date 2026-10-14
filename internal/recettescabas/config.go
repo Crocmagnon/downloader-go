@@ -1,5 +1,5 @@
-// Package recettescabas sends a weekly Recettes & Cabas recap to Telegram
-// and applies the selection changes requested from the Telegram bot.
+// Package recettescabas bridges Recettes & Cabas with Home Assistant: it pushes each read of
+// the site to a Home Assistant webhook and applies the selection Home Assistant asks for.
 package recettescabas
 
 import (

@@ -37,17 +37,16 @@ func post(t *testing.T, srv *httptest.Server, path, auth, body string) (int, str
 type apiFixture struct {
 	srv    *httptest.Server
 	fakes  *fakes
-	calls  *[]tgCall
 	pushes func() []string
 	svc    *Service
 }
 
 func newAPI(t *testing.T) apiFixture {
 	t.Helper()
-	s, f, calls, _ := newService(t)
+	s, f, _ := newService(t)
 	url, pushes := fakeHA(t, http.StatusOK)
 	s.HAWebhook = url
-	fx := apiFixture{fakes: f, calls: calls, pushes: pushes, svc: &s}
+	fx := apiFixture{fakes: f, pushes: pushes, svc: &s}
 	// Built per request so that tests may change the service after newAPI.
 	fx.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fx.svc.API(testToken).ServeHTTP(w, r)
@@ -69,7 +68,7 @@ func TestAPIRequiresToken(t *testing.T) {
 }
 
 func TestAPIEmptyTokenNeverAuthenticates(t *testing.T) {
-	s, _, _, _ := newService(t)
+	s, _, _ := newService(t)
 	srv := httptest.NewServer(s.API(""))
 	t.Cleanup(srv.Close)
 	if code, _ := post(t, srv, "/refresh", "Bearer ", ""); code != http.StatusUnauthorized {
@@ -98,9 +97,6 @@ func TestAPIRefresh(t *testing.T) {
 	}
 	if fx.fakes.fetches != 1 || len(fx.pushes()) != 1 {
 		t.Errorf("fetches = %d, pushes = %d", fx.fakes.fetches, len(fx.pushes()))
-	}
-	if len(*fx.calls) != 0 {
-		t.Errorf("refresh talked to Telegram: %+v", *fx.calls)
 	}
 }
 
@@ -153,20 +149,6 @@ func TestAPIApply(t *testing.T) {
 	if got := fx.pushes(); len(got) != 1 || !strings.Contains(got[0], `"name":"Poisson","label":"","option":false,"selected":true`) {
 		t.Errorf("pushes = %v", got)
 	}
-
-	var methods []string
-	for _, c := range *fx.calls {
-		methods = append(methods, c.Method)
-	}
-	if strings.Join(methods, ",") != "sendMessage,sendMediaGroup,sendMessage" {
-		t.Fatalf("telegram calls = %v", methods)
-	}
-	if c := (*fx.calls)[0]; !strings.Contains(c.Body, "✏️ Sélection modifiée depuis Home Assistant") {
-		t.Errorf("header = %s", c.Body)
-	}
-	if c := last(fx.calls); !strings.Contains(c.Body, "✅ 3. Poisson") {
-		t.Errorf("recap = %s", c.Body)
-	}
 }
 
 func TestAPIApplyWeekChanged(t *testing.T) {
@@ -176,8 +158,8 @@ func TestAPIApplyWeekChanged(t *testing.T) {
 	if code != http.StatusConflict || !strings.Contains(body, "semaine a changé") {
 		t.Errorf("%d %q", code, body)
 	}
-	if len(*fx.calls) != 0 || len(fx.pushes()) != 0 {
-		t.Errorf("calls = %+v, pushes = %v", *fx.calls, fx.pushes())
+	if len(fx.pushes()) != 0 {
+		t.Errorf("pushes = %v", fx.pushes())
 	}
 }
 
@@ -188,13 +170,13 @@ func TestAPIApplySiteFailure(t *testing.T) {
 	if code != http.StatusBadGateway || body != "échec : item 3: the site did not save the change\n" {
 		t.Errorf("%d %q", code, body)
 	}
-	if len(*fx.calls) != 0 {
-		t.Errorf("calls = %+v", *fx.calls)
+	if len(fx.pushes()) != 0 {
+		t.Errorf("failed apply was pushed: %v", fx.pushes())
 	}
 }
 
 func TestSiteAccessIsSerialized(t *testing.T) {
-	s, _, _, _ := newService(t)
+	s, _, _ := newService(t)
 	var running, overlaps atomic.Int32
 	slow := func() {
 		if running.Add(1) > 1 {
@@ -203,8 +185,8 @@ func TestSiteAccessIsSerialized(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 		running.Add(-1)
 	}
-	s.Fetch = func(context.Context) (Page, error) { slow(); return botPage(), nil }
-	s.Apply = func(context.Context, string, map[int]bool) (Page, error) { slow(); return botPage(), nil }
+	s.Fetch = func(context.Context) (Page, error) { slow(); return testPage(), nil }
+	s.Apply = func(context.Context, string, map[int]bool) (Page, error) { slow(); return testPage(), nil }
 
 	var wg sync.WaitGroup
 	for range 3 {
@@ -214,18 +196,5 @@ func TestSiteAccessIsSerialized(t *testing.T) {
 	wg.Wait()
 	if n := overlaps.Load(); n != 0 {
 		t.Errorf("%d overlapping site accesses", n)
-	}
-}
-
-func TestCheckBridge(t *testing.T) {
-	if on, err := CheckBridge("", "", ""); on || err != nil {
-		t.Errorf("unset: %v, %v", on, err)
-	}
-	if on, err := CheckBridge("127.0.0.1:8789", "t", "https://ha/api/webhook/x"); !on || err != nil {
-		t.Errorf("set: %v, %v", on, err)
-	}
-	_, err := CheckBridge("127.0.0.1:8789", "", "https://ha/api/webhook/x")
-	if err == nil || !strings.Contains(err.Error(), "RC_API_TOKEN") || strings.Contains(err.Error(), "--api-listen") {
-		t.Errorf("partial: %v", err)
 	}
 }

@@ -2,7 +2,6 @@ package recettescabas
 
 import (
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/mxschmitt/playwright-go"
@@ -62,61 +61,6 @@ func TestAnnotateWithoutRulesFlagsNothing(t *testing.T) {
 	}
 }
 
-func TestRecapText(t *testing.T) {
-	p := Page{
-		Week: "19/10/2026", Deadline: "Jeudi 15 Octobre 2026 à 23h00",
-		People: "Panier à cuisiner 4 pers.", Price: "102,25",
-		Items: []Item{
-			{N: 1, Name: "Gratin", Label: "top chrono", Flags: []Hit{{"🍄", "champignons"}}},
-			{N: 2, Name: "Filet mignon", Label: "viande 1", Selected: true},
-			{N: 9, Name: "Poulet", Label: "viande 2", Selected: true, Flags: []Hit{{"🍄", "champignons"}}},
-			{N: 10, Name: "Tarte", Label: "Kit dessert (12.95€)", Option: true},
-		},
-	}
-
-	want := `<b>🧺 Semaine du 19/10/2026</b>
-Modifiable jusqu'au Jeudi 15 Octobre 2026 à 23h00
-Panier à cuisiner 4 pers. · 102,25 €
-⚠️ Sélection : 🍄 9
-
-<b>✅ Recettes sélectionnées</b>
-2. Filet mignon (viande 1)
-9. 🍄 Poulet (viande 2) — <b>champignons</b>
-
-<b>➕ Recettes disponibles</b>
-1. 🍄 Gratin (top chrono) — <b>champignons</b>
-
-<b>➕ Options disponibles</b>
-10. Tarte (Kit dessert (12.95€))`
-
-	if got := RecapText(p); got != want {
-		t.Errorf("RecapText =\n%s\n\nwant\n%s", got, want)
-	}
-}
-
-func TestRecapTextWithoutPriceNorAlert(t *testing.T) {
-	p := Page{Week: "19/10/2026", Deadline: "Jeudi", People: "4 pers.", Items: []Item{{N: 2, Name: "Filet", Label: "viande 1", Selected: true}}}
-	got := RecapText(p)
-	if strings.Contains(got, "€") || strings.Contains(got, "⚠️") || strings.Contains(got, "disponibles") || strings.Contains(got, "Options") {
-		t.Errorf("unexpected content:\n%s", got)
-	}
-}
-
-func TestRecapTextEscapesHTML(t *testing.T) {
-	p := Page{Week: "19/10/2026", Deadline: "Jeudi", People: "4 pers.", Items: []Item{{N: 2, Name: "Pâtes & <fromage>", Label: "viande 1", Selected: true}}}
-	if got := RecapText(p); !strings.Contains(got, "2. Pâtes &amp; &lt;fromage&gt; (viande 1)") {
-		t.Errorf("RecapText =\n%s", got)
-	}
-}
-
-func TestDetailText(t *testing.T) {
-	it := Item{N: 6, Name: "Quiche", Label: "protéinée", Ingredients: "poireaux ; salade verte", Pantry: "sel & poivre", Flags: []Hit{{"🥗", "salade"}}}
-	want := "6. 🥗 Quiche (protéinée) — <b>salade</b>\n\n<b>Ingrédients du cabas</b>\npoireaux ; salade verte\n\n<b>Ingrédients du placard</b>\nsel &amp; poivre"
-	if got := DetailText(it); got != want {
-		t.Errorf("DetailText = %q, want %q", got, want)
-	}
-}
-
 func TestAnnotateFixture(t *testing.T) {
 	cfg, err := LoadConfig("testdata/config.json")
 	if err != nil {
@@ -157,20 +101,19 @@ func TestAnnotateFixture(t *testing.T) {
 	})
 }
 
-func TestLineDropsLabelRepeatingName(t *testing.T) {
+func TestLabelSuffixDropsRepeatedName(t *testing.T) {
 	tests := []struct {
 		it   Item
 		want string
 	}{
-		{Item{N: 13, Name: "Fruits Petit Format", Label: "Fruits Petit Format (9.10€)", Option: true}, "13. Fruits Petit Format (9.10€)"},
-		{Item{N: 11, Name: "Assortiment de desserts lactés de la ferme", Label: "ASSORTIMENT DE DESSERTS LACTÉS DE LA FERME (10.70€)", Option: true}, "11. Assortiment de desserts lactés de la ferme (10.70€)"},
-		{Item{N: 10, Name: "Tarte fondante aux noix", Label: "Kit dessert à cuisiner (12.95€)", Option: true}, "10. Tarte fondante aux noix (Kit dessert à cuisiner (12.95€))"},
-		{Item{N: 2, Name: "Filet mignon", Label: "viande 1"}, "2. Filet mignon (viande 1)"},
-		{Item{N: 13, Name: "Fruits", Label: "Fruits (9.10€)", Option: true, Selection: "Poires et raisins"}, "13. Fruits (9.10€)\n    ↳ Poires et raisins"},
+		{Item{Name: "Fruits Petit Format", Label: "Fruits Petit Format (9.10€)", Option: true}, "9.10€"},
+		{Item{Name: "Assortiment de desserts lactés de la ferme", Label: "ASSORTIMENT DE DESSERTS LACTÉS DE LA FERME (10.70€)", Option: true}, "10.70€"},
+		{Item{Name: "Tarte fondante aux noix", Label: "Kit dessert à cuisiner (12.95€)", Option: true}, "Kit dessert à cuisiner (12.95€)"},
+		{Item{Name: "Filet mignon", Label: "viande 1"}, "viande 1"},
 	}
 	for _, tt := range tests {
-		if got := line(tt.it); got != tt.want {
-			t.Errorf("line = %q, want %q", got, tt.want)
+		if got := labelSuffix(tt.it); got != tt.want {
+			t.Errorf("labelSuffix(%q, %q) = %q, want %q", tt.it.Name, tt.it.Label, got, tt.want)
 		}
 	}
 }

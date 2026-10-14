@@ -9,8 +9,8 @@ Currently only supports the following:
 * Octopus Energy proof of address (non-functional)
 * Shiva latest payslip
 * LCL latest bank statement
-* Recettes & Cabas weekly recap on Telegram, with a bot to change the selection, and an optional
-  Home Assistant bridge (`RC_HA_WEBHOOK_URL`, `RC_API_TOKEN`, `--api-listen`: all three or none)
+* Recettes & Cabas bridge with Home Assistant: pushes the week to a webhook, applies the selection
+  Home Assistant asks for
 
 ## Usage
 
@@ -44,11 +44,8 @@ Commands:
   lcl-checking --username=STRING --password=STRING [flags]
     Download latest bank statement from LCL.
 
-  recettes-cabas recap --username=STRING --password=STRING --config=STRING --telegram-token=STRING --telegram-chat-id=INT-64 [flags]
-    Send the weekly recap to Telegram.
-
-  recettes-cabas bot --username=STRING --password=STRING --config=STRING --telegram-token=STRING --telegram-chat-id=INT-64 [flags]
-    Run the Telegram bot that applies selection changes.
+  recettes-cabas serve --username=STRING --password=STRING --config=STRING --api-listen=STRING --api-token=STRING --ha-webhook=STRING [flags]
+    Serve the API Home Assistant calls, and push each read of the site to it.
 
   photos [flags]
     Download photos.
@@ -65,8 +62,7 @@ When updating go dependencies, remember to bump the vendorHash in flake.nix.
 
 ### Secrets
 
-`mise.local.toml` holds the environment variables used for local runs (`RC_USERNAME`, `RC_PASSWORD`,
-`TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID`). It is encrypted with git-crypt; mise loads it once unlocked.
+`mise.local.toml` holds the environment variables used for local runs (`RC_USERNAME`, `RC_PASSWORD`…). It is encrypted with git-crypt; mise loads it once unlocked.
 
 ### How to unlock?
 

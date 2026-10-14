@@ -130,59 +130,27 @@ func (r *ZeplugCmd) Run(ctx *Context) error {
 	return zeplug.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
-type RecettesCabasFlags struct {
-	Username       string `required:"" short:"u" env:"RC_USERNAME" help:"Recettes & Cabas username"`
-	Password       string `required:"" short:"p" env:"RC_PASSWORD" help:"Recettes & Cabas password"`
-	Config         string `required:"" type:"existingfile" help:"JSON config file (flags and excluded options)."`
-	TelegramToken  string `required:"" env:"TELEGRAM_TOKEN" help:"Telegram bot token"`
-	TelegramChatID int64  `required:"" env:"TELEGRAM_CHAT_ID" help:"The only Telegram chat the bot talks to"`
-	HAWebhook      string `env:"RC_HA_WEBHOOK_URL" help:"Home Assistant webhook URL the week is pushed to after each read of the site."`
+type RecettesCabasServeCmd struct {
+	Username  string `required:"" short:"u" env:"RC_USERNAME" help:"Recettes & Cabas username"`
+	Password  string `required:"" short:"p" env:"RC_PASSWORD" help:"Recettes & Cabas password"`
+	Config    string `required:"" type:"existingfile" help:"JSON config file (flags and excluded options)."`
+	APIListen string `required:"" help:"Address of the API Home Assistant calls, e.g. 127.0.0.1:8789."`
+	APIToken  string `required:"" env:"RC_API_TOKEN" help:"Bearer token the API requires."`
+	HAWebhook string `required:"" env:"RC_HA_WEBHOOK_URL" help:"Home Assistant webhook URL the week is pushed to after each read of the site."`
 }
 
-func (f RecettesCabasFlags) service(ctx *Context) (recettescabas.Service, error) {
-	return recettescabas.NewService(os.Stdout, os.Stderr, ctx.Headless, f.Username, f.Password, f.Config, f.TelegramToken, f.TelegramChatID, f.HAWebhook)
-}
-
-type RecettesCabasRecapCmd struct {
-	RecettesCabasFlags `embed:""`
-}
-
-func (r *RecettesCabasRecapCmd) Run(ctx *Context) error {
-	svc, err := r.service(ctx)
-	if err != nil {
-		return err
-	}
-	return svc.SendRecap(context.Background())
-}
-
-type RecettesCabasBotCmd struct {
-	RecettesCabasFlags `embed:""`
-	APIListen          string `help:"Address of the API Home Assistant calls, e.g. 127.0.0.1:8789."`
-	APIToken           string `env:"RC_API_TOKEN" help:"Bearer token the API requires."`
-}
-
-func (r *RecettesCabasBotCmd) Run(ctx *Context) error {
-	bridge, err := recettescabas.CheckBridge(r.APIListen, r.APIToken, r.HAWebhook)
-	if err != nil {
-		return err
-	}
-	svc, err := r.service(ctx)
+func (r *RecettesCabasServeCmd) Run(ctx *Context) error {
+	svc, err := recettescabas.NewService(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, r.Config, r.HAWebhook)
 	if err != nil {
 		return err
 	}
 	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if bridge {
-		if err := svc.StartAPI(sigCtx, r.APIListen, r.APIToken); err != nil {
-			return err
-		}
-	}
-	return svc.Run(sigCtx)
+	return svc.Serve(sigCtx, r.APIListen, r.APIToken)
 }
 
 type RecettesCabasCmd struct {
-	Recap RecettesCabasRecapCmd `cmd:"" help:"Send the weekly recap to Telegram."`
-	Bot   RecettesCabasBotCmd   `cmd:"" help:"Run the Telegram bot that applies selection changes."`
+	Serve RecettesCabasServeCmd `cmd:"" help:"Serve the API Home Assistant calls, and push each read of the site to it."`
 }
 
 type VersionCmd struct{}
@@ -236,7 +204,7 @@ type Cli struct {
 	Shiva                ShivaCmd                `cmd:"" help:"Download latest payslip from Shiva."`
 	LCLChecking          LCLCheckingCmd          `cmd:"" help:"Download latest bank statement from LCL."`
 	Zeplug               ZeplugCmd               `cmd:"" help:"Download latest invoice from Zeplug."`
-	RecettesCabas        RecettesCabasCmd        `cmd:"" help:"Recettes & Cabas weekly recap and Telegram bot."`
+	RecettesCabas        RecettesCabasCmd        `cmd:"" help:"Recettes & Cabas bridge with Home Assistant."`
 	Photos               PhotosCmd               `cmd:"" help:"Download photos."`
 	Version              VersionCmd              `cmd:"" help:"Print version information."`
 }

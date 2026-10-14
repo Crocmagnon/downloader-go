@@ -31,7 +31,7 @@ const setSelectionJS = `(changes) => {
 // checkboxes back or keep the button disabled. Other fields are posted as-is.
 const submitJS = `() => document.querySelector('` + prefFormSelector + `').submit()`
 
-func NewService(stdout, stderr io.Writer, headless bool, username, password, configPath, token string, chatID int64, haWebhook string) (Service, error) {
+func NewService(stdout, stderr io.Writer, headless bool, username, password, configPath, haWebhook string) (Service, error) {
 	cfg, err := LoadConfig(configPath)
 	if err != nil {
 		return Service{}, err
@@ -42,12 +42,8 @@ func NewService(stdout, stderr io.Writer, headless bool, username, password, con
 	}
 
 	return Service{
-		TG:     NewTelegram(token),
-		ChatID: chatID,
-		Config: cfg,
-		Log:    stderr,
-		// In the working directory, next to cookies.json.
-		PrefsPath: "prefs.json",
+		Config:    cfg,
+		Log:       stderr,
 		HAWebhook: haWebhook,
 		site:      &sync.Mutex{},
 		Fetch: func(context.Context) (Page, error) {
@@ -108,7 +104,7 @@ func login(page playwright.Page, username, password string) error {
 }
 
 // fill types value into l. Playwright's error call log echoes the typed value,
-// so the error is replaced: credentials must never reach logs or Telegram.
+// so the error is replaced: credentials must never reach logs or Home Assistant.
 func fill(l playwright.Locator, value, what string) error {
 	if err := l.Fill(value); err != nil {
 		return fmt.Errorf("typing %s failed (see screenshot)", what)

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -95,7 +97,7 @@ func (s Service) postHA(ctx context.Context, p Page) error {
 		return fmt.Errorf("home assistant: marshaling: %w", err)
 	}
 
-	// Pushed even if the caller gave up waiting: the site was read, HA should know.
+	// Pushed even if the caller gave up waiting: the site was read, Home Assistant should know.
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), haTimeout)
 	defer cancel()
 
@@ -107,7 +109,7 @@ func (s Service) postHA(ctx context.Context, p Page) error {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("home assistant: %w", redact(err)) // the URL holds the webhook id
+		return fmt.Errorf("home assistant: %w", redact(err))
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
@@ -116,4 +118,13 @@ func (s Service) postHA(ctx context.Context, p Page) error {
 	}
 
 	return nil
+}
+
+// redact drops the URL of a *url.Error: it holds the webhook id, a secret.
+func redact(err error) error {
+	if uerr, ok := errors.AsType[*url.Error](err); ok {
+		return uerr.Err
+	}
+
+	return err
 }

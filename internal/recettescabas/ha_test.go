@@ -33,7 +33,7 @@ func fakeHA(t *testing.T, status int) (url string, pushes func() []string) {
 }
 
 func TestHAJSON(t *testing.T) {
-	p := botPage()
+	p := testPage()
 	p.Items[0].Selected = true
 	got, err := haJSON(Annotate(p, testConfig()))
 	if err != nil {
@@ -60,40 +60,38 @@ func TestHAJSONWithoutAlerts(t *testing.T) {
 	}
 }
 
-func TestEverySiteReadIsPushed(t *testing.T) {
+func TestReadsAndAppliesArePushed(t *testing.T) {
 	url, pushes := fakeHA(t, http.StatusOK)
-	s, _, _, _ := newService(t)
+	s, _, _ := newService(t)
 	s.HAWebhook = url
 
-	if err := s.SendRecap(context.Background()); err != nil {
+	if _, err := s.fetch(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	s.handle(context.Background(), Update{Message: &Message{Chat: Chat{ID: testChat}, Text: "/detail 1"}})
-	s.handle(context.Background(), callback(cbValidate, recapMessage(Toggle(NewKeyboard(botPage().Items, false), 3))))
+	if _, err := s.apply(context.Background(), "19/10/2026", map[int]bool{3: true}); err != nil {
+		t.Fatal(err)
+	}
 
 	got := pushes()
-	if len(got) != 3 {
-		t.Fatalf("%d pushes, want 3 (recap, detail, validate)", len(got))
+	if len(got) != 2 {
+		t.Fatalf("%d pushes, want 2 (fetch, apply)", len(got))
 	}
-	// Pushed annotated: flags are set, as in the recap.
+	// Pushed annotated: flags are set.
 	if !strings.Contains(got[0], `"word":"champignons"`) {
 		t.Errorf("push = %s", got[0])
 	}
-	if !strings.Contains(got[2], `"n":3,"name":"Poisson","label":"","option":false,"selected":true`) {
-		t.Errorf("validate push = %s, want the applied state", got[2])
+	if !strings.Contains(got[1], `"n":3,"name":"Poisson","label":"","option":false,"selected":true`) {
+		t.Errorf("apply push = %s, want the applied state", got[1])
 	}
 }
 
 func TestPushFailureIsOnlyLogged(t *testing.T) {
 	url, _ := fakeHA(t, http.StatusInternalServerError)
-	s, _, calls, log := newService(t)
+	s, _, log := newService(t)
 	s.HAWebhook = url
 
-	if err := s.SendRecap(context.Background()); err != nil {
-		t.Fatalf("SendRecap = %v, want the recap sent anyway", err)
-	}
-	if last(calls).Method != "sendMessage" {
-		t.Errorf("recap not sent: %+v", *calls)
+	if _, err := s.fetch(context.Background()); err != nil {
+		t.Fatalf("fetch = %v, want the read to succeed anyway", err)
 	}
 	if !strings.Contains(log.String(), "500") {
 		t.Errorf("log = %q", log.String())
@@ -102,10 +100,10 @@ func TestPushFailureIsOnlyLogged(t *testing.T) {
 
 func TestPushErrorHidesWebhookID(t *testing.T) {
 	url, _ := fakeHA(t, http.StatusOK)
-	s, _, _, log := newService(t)
+	s, _, log := newService(t)
 	s.HAWebhook = strings.Replace(url, "http://", "http://unreachable.invalid.", 1)
 
-	if err := s.SendRecap(context.Background()); err != nil {
+	if _, err := s.fetch(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	if log.Len() == 0 || strings.Contains(log.String(), "SECRETID") {
@@ -115,15 +113,15 @@ func TestPushErrorHidesWebhookID(t *testing.T) {
 
 func TestPushWarnsAboutItemsWithoutSlot(t *testing.T) {
 	url, pushes := fakeHA(t, http.StatusOK)
-	s, _, _, log := newService(t)
+	s, _, log := newService(t)
 	s.HAWebhook = url
 	s.Fetch = func(context.Context) (Page, error) {
-		p := botPage()
+		p := testPage()
 		p.Items = append(p.Items, Item{N: 26, Name: "Extra", Option: true})
 		return p, nil
 	}
 
-	if err := s.SendRecap(context.Background()); err != nil {
+	if _, err := s.fetch(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(log.String(), "item 26") {
