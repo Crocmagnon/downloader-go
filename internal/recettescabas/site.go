@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/Crocmagnon/downloader-go/internal/pw"
 	"github.com/mxschmitt/playwright-go"
@@ -30,7 +31,7 @@ const setSelectionJS = `(changes) => {
 // checkboxes back or keep the button disabled. Other fields are posted as-is.
 const submitJS = `() => document.querySelector('` + prefFormSelector + `').submit()`
 
-func NewService(stdout, stderr io.Writer, headless bool, username, password, configPath, token string, chatID int64) (Service, error) {
+func NewService(stdout, stderr io.Writer, headless bool, username, password, configPath, token string, chatID int64, haWebhook string) (Service, error) {
 	cfg, err := LoadConfig(configPath)
 	if err != nil {
 		return Service{}, err
@@ -47,6 +48,8 @@ func NewService(stdout, stderr io.Writer, headless bool, username, password, con
 		Log:    stderr,
 		// In the working directory, next to cookies.json.
 		PrefsPath: "prefs.json",
+		HAWebhook: haWebhook,
+		site:      &sync.Mutex{},
 		Fetch: func(context.Context) (Page, error) {
 			var p Page
 			err := browse(func(page playwright.Page) error {

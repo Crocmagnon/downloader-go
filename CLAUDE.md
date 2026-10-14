@@ -81,7 +81,7 @@ Current providers:
 - `octopusenergyaddress`: Energy proof of address (marked non-functional in README)
 - `shiva`: Payslips
 - `lclchecking`: Bank statements from LCL
-- `recettescabas`: Recettes & Cabas weekly Telegram recap with ingredient flags, plus a Telegram bot to change the selection (`recettes-cabas recap|bot`; config format in `internal/recettescabas/testdata/config.json`). Its Playwright tests skip unless `PLAYWRIGHT_DRIVER_PATH` is set
+- `recettescabas`: Recettes & Cabas weekly Telegram recap with ingredient flags, plus a Telegram bot to change the selection (`recettes-cabas recap|bot`; config format in `internal/recettescabas/testdata/config.json`). The bot can also bridge with Home Assistant: it pushes each read of the site to a webhook and serves `POST /refresh` and `POST /apply` (`api.go`, `ha.go`; JSON field names are read by the HA package, don't rename them). Its Playwright tests skip unless `PLAYWRIGHT_DRIVER_PATH` is set
 - `photos`: Photo downloads (no credentials required)
 
 ## Key Dependencies

@@ -28,7 +28,7 @@ type Item struct {
 	Ingredients string // "Ingrédients du cabas"
 	Pantry      string // "Ingrédients du placard"
 	Selection   string // an option's content (this week's fruits, cheeses…), if any
-	Image       string // photo URL, recipes only
+	Image       string // photo URL
 	Flags       []Hit  // set by Annotate
 }
 
@@ -80,7 +80,7 @@ const extractJS = `() => {
         return {
           inputId: input.id,
           selection: text(weekly),
-          image: span.closest('li')?.querySelector('img.recette')?.src ?? '',
+          image: span.closest('li')?.querySelector('.img_container_card img')?.src ?? '',
           name: text(link),
           label: text(document.querySelector('label[for="' + input.id + '"]')),
           option: span.dataset.ref === 'Option',

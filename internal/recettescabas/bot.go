@@ -8,6 +8,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -38,20 +39,55 @@ type Service struct {
 	Log   io.Writer
 	// PrefsPath is the /affichage settings file, shared by the bot and the weekly recap.
 	PrefsPath string
+	// HAWebhook is the Home Assistant webhook every read of the site is pushed to; empty
+	// disables the push.
+	HAWebhook string
+	// site serializes Fetch and Apply: Telegram and Home Assistant may act at the same
+	// time, and two browsers would race on cookies.json.
+	site *sync.Mutex
+}
+
+// fetch reads the site and pushes what it read to Home Assistant.
+func (s Service) fetch(ctx context.Context) (Page, error) {
+	s.site.Lock()
+	defer s.site.Unlock()
+
+	p, err := s.Fetch(ctx)
+	if err == nil {
+		s.pushHA(ctx, p)
+	}
+
+	return p, err
+}
+
+// apply changes the selection on the site and pushes the result to Home Assistant.
+func (s Service) apply(ctx context.Context, week string, desired map[int]bool) (Page, error) {
+	s.site.Lock()
+	defer s.site.Unlock()
+
+	p, err := s.Apply(ctx, week, desired)
+	if err == nil {
+		s.pushHA(ctx, p)
+	}
+
+	return p, err
 }
 
 func (s Service) SendRecap(ctx context.Context) error {
-	p, err := s.Fetch(ctx)
+	p, err := s.fetch(ctx)
 	if err != nil {
 		return err
 	}
 
-	p = Annotate(p, s.Config)
+	return s.sendRecap(ctx, Annotate(p, s.Config))
+}
 
+// sendRecap sends the album and the recap of an annotated page.
+func (s Service) sendRecap(ctx context.Context, p Page) error {
 	// Recipe photos first, as an album; the recap stays usable without them.
 	var photos []Photo
 	for _, it := range p.Items {
-		if it.Image != "" {
+		if !it.Option && it.Image != "" {
 			photos = append(photos, Photo{URL: it.Image, Caption: fmt.Sprintf("%d. %s", it.N, it.Name)})
 		}
 	}
@@ -154,7 +190,7 @@ func (s Service) detail(ctx context.Context, arg string) {
 	stop := s.busy(ctx)
 	defer stop()
 
-	p, err := s.Fetch(ctx)
+	p, err := s.fetch(ctx)
 	if err != nil {
 		s.fail(ctx, err)
 		return
@@ -227,7 +263,7 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 	defer stop()
 
 	// An empty week (unexpected message text) never matches the site's: nothing is applied.
-	p, err := s.Apply(ctx, weekRe.FindString(msg.Text), desired)
+	p, err := s.apply(ctx, weekRe.FindString(msg.Text), desired)
 
 	switch {
 	case errors.Is(err, ErrWeekChanged):
@@ -242,8 +278,6 @@ func (s Service) validate(ctx context.Context, msg *Message, kb [][]Button) {
 	}
 }
 
-// fail logs err and sends its first line to Telegram, shortened: Playwright errors
-// carry long call logs, and a message over Telegram's limit would not be delivered.
 // busy shows "typing…" in the chat until stop is called: reading or changing the site takes
 // several seconds, and Telegram drops the indicator after 5.
 func (s Service) busy(ctx context.Context) (stop func()) {
@@ -277,15 +311,21 @@ func (s Service) prefs() Prefs {
 	return p
 }
 
+// fail logs err and sends its first line to Telegram: a message over Telegram's limit
+// would not be delivered.
 func (s Service) fail(ctx context.Context, err error) {
 	s.report(err)
+	s.report(s.TG.Send(ctx, s.ChatID, "❌ échec : "+html.EscapeString(firstLine(err)), nil))
+}
 
+// firstLine returns the first line of err, shortened: Playwright errors carry long call logs.
+func firstLine(err error) string {
 	msg, _, _ := strings.Cut(err.Error(), "\n")
 	if r := []rune(msg); len(r) > maxFailRunes {
 		msg = string(r[:maxFailRunes]) + "…"
 	}
 
-	s.report(s.TG.Send(ctx, s.ChatID, "❌ échec : "+html.EscapeString(msg), nil))
+	return msg
 }
 
 func (s Service) report(err error) {

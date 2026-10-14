@@ -128,8 +128,11 @@ func TestExtract(t *testing.T) {
 		if got := r2.Image; got != "https://www.recettesetcabas.com/data/recettes/5320-1-default@6AC4AE4B.webp" {
 			t.Errorf("recipe 2 image = %q", got)
 		}
-		if got := item(t, p, 10).Image; got != "" {
-			t.Errorf("option 10 image = %q, want none (recipes only)", got)
+		if got := item(t, p, 10).Image; got != "https://www.recettesetcabas.com/data/options/2300-1-default@6AC4B1C2.webp" {
+			t.Errorf("option 10 image = %q", got)
+		}
+		if got := item(t, p, 11).Image; got != "" {
+			t.Errorf("option 11 image = %q, want none", got)
 		}
 
 		o10 := item(t, p, 10)

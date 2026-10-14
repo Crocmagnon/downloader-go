@@ -7,6 +7,7 @@ import (
 	"maps"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -19,6 +20,7 @@ func botPage() Page {
 			{N: 1, Name: "Gratin", Label: "top chrono", Ingredients: "champignons de Paris", Image: "https://x/1.webp"},
 			{N: 2, Name: "Filet", Label: "viande 1", Selected: true, Ingredients: "porc", Image: "https://x/2.webp"},
 			{N: 3, Name: "Poisson", Label: "poisson", Ingredients: "cabillaud"},
+			{N: 10, Name: "Fruits", Label: "Fruits (9.10€)", Option: true, Selection: "Poires", Image: "https://x/10.webp"},
 		},
 	}
 }
@@ -35,7 +37,7 @@ func newService(t *testing.T) (Service, *fakes, *[]tgCall, *bytes.Buffer) {
 	f := &fakes{}
 	var log bytes.Buffer
 	s := Service{
-		TG: tg, ChatID: testChat, Config: testConfig(), Log: &log, PrefsPath: filepath.Join(t.TempDir(), "prefs.json"),
+		TG: tg, ChatID: testChat, Config: testConfig(), Log: &log, PrefsPath: filepath.Join(t.TempDir(), "prefs.json"), site: &sync.Mutex{},
 		Fetch: func(context.Context) (Page, error) { f.fetches++; return botPage(), nil },
 		Apply: func(_ context.Context, week string, desired map[int]bool) (Page, error) {
 			f.applyWeek, f.applyWanted = week, desired
@@ -82,7 +84,7 @@ func TestSendRecapSendsRecipeAlbumFirst(t *testing.T) {
 	if len(*calls) != 2 || (*calls)[0].Method != "sendMediaGroup" || (*calls)[1].Method != "sendMessage" {
 		t.Fatalf("calls = %+v", *calls)
 	}
-	if body := (*calls)[0].Body; !strings.Contains(body, `"caption":"1. Gratin"`) || !strings.Contains(body, "https://x/2.webp") {
+	if body := (*calls)[0].Body; !strings.Contains(body, `"caption":"1. Gratin"`) || !strings.Contains(body, "https://x/2.webp") || strings.Contains(body, "https://x/10.webp") {
 		t.Errorf("album = %s", body)
 	}
 }

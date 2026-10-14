@@ -197,7 +197,7 @@ func (t Telegram) call(ctx context.Context, method string, params, result any) e
 	return nil
 }
 
-// redact drops the URL of a *url.Error: it contains the bot token.
+// redact drops the URL of a *url.Error: it contains a secret (bot token, webhook id).
 func redact(err error) error {
 	if uerr, ok := errors.AsType[*url.Error](err); ok {
 		return uerr.Err

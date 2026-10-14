@@ -44,14 +44,12 @@ func RecapText(p Page) string {
 		fmt.Fprintf(&b, " · %s €", esc(p.Price))
 	}
 
-	var alerts []string
-	for _, it := range p.Items {
-		if it.Selected && len(it.Flags) > 0 {
-			alerts = append(alerts, emojis(it)+" "+strconv.Itoa(it.N))
-		}
+	var warnings []string
+	for _, it := range alerts(p) {
+		warnings = append(warnings, emojis(it)+" "+strconv.Itoa(it.N))
 	}
-	if len(alerts) > 0 {
-		b.WriteString("\n⚠️ Sélection : " + strings.Join(alerts, ", "))
+	if len(warnings) > 0 {
+		b.WriteString("\n⚠️ Sélection : " + strings.Join(warnings, ", "))
 	}
 
 	section := func(title string, option, selected bool) {
@@ -71,6 +69,18 @@ func RecapText(p Page) string {
 	section("➕ Options disponibles", true, false)
 
 	return b.String()
+}
+
+// alerts returns the selected items that carry a flag.
+func alerts(p Page) []Item {
+	var out []Item
+	for _, it := range p.Items {
+		if it.Selected && len(it.Flags) > 0 {
+			out = append(out, it)
+		}
+	}
+
+	return out
 }
 
 func DetailText(it Item) string {

@@ -9,7 +9,8 @@ Currently only supports the following:
 * Octopus Energy proof of address (non-functional)
 * Shiva latest payslip
 * LCL latest bank statement
-* Recettes & Cabas weekly recap on Telegram, with a bot to change the selection
+* Recettes & Cabas weekly recap on Telegram, with a bot to change the selection, and an optional
+  Home Assistant bridge (`RC_HA_WEBHOOK_URL`, `RC_API_TOKEN`, `--api-listen`: all three or none)
 
 ## Usage
 
