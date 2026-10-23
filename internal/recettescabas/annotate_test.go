@@ -9,7 +9,7 @@ import (
 
 func testConfig() Config {
 	return Config{
-		ExcludeOptions: []string{"château", "domaine", "rosé"},
+		ExcludeOptions: []string{"château", "domaine", "rosé", "vin"},
 		Flags: []Flag{
 			{Emoji: "🍄", Keywords: []string{"champignon"}},
 			{Emoji: "🥗", Keywords: []string{"salade", "mesclun"}},
@@ -19,12 +19,13 @@ func testConfig() Config {
 
 func TestAnnotate(t *testing.T) {
 	p := Page{Items: []Item{
-		{N: 1, Name: "Gratin champignons", Ingredients: "boulgour ; mascarpone"},      // title only: no flag
-		{N: 2, Name: "Filet mignon rosé", Ingredients: "porc ; champignons de Paris"}, // recipe with an exclusion word: kept
-		{N: 6, Name: "Quiche", Ingredients: "poireaux ; salade verte ; champignon"},   // two flags
+		{N: 1, Name: "Gratin champignons", Ingredients: "boulgour ; mascarpone"},                  // title only: no flag
+		{N: 2, Name: "Filet mignon rosé", Ingredients: "porc ; champignons de Paris ; vin blanc"}, // recipe with exclusion words: kept
+		{N: 6, Name: "Quiche", Ingredients: "poireaux ; salade verte ; champignon"},               // two flags
 		{N: 10, Name: "Tarte", Label: "Kit dessert (12.95€)", Option: true},
-		{N: 18, Name: "Château Puech-Haut", Label: "IGP Pays d'Oc", Option: true},           // excluded by name
-		{N: 19, Name: "Saint-Joseph Rouge", Label: "DOMAINE GILLES (16.90€)", Option: true}, // excluded by label
+		{N: 18, Name: "Château Puech-Haut", Label: "IGP Pays d'Oc", Option: true},                                              // excluded by name
+		{N: 19, Name: "Saint-Joseph Rouge", Label: "DOMAINE GILLES (16.90€)", Option: true},                                    // excluded by label
+		{N: 20, Name: "Bouc à Poil(s) 2025 BIO", Ingredients: "Vin agréé par la marque MA REGION SES TERROIRS.", Option: true}, // excluded by ingredients
 	}}
 
 	got := Annotate(p, testConfig())

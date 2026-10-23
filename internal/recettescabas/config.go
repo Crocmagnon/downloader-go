@@ -15,7 +15,8 @@ type Flag struct {
 }
 
 type Config struct {
-	// ExcludeOptions hides options whose name or label contains one of these keywords.
+	// ExcludeOptions hides options whose name, label or ingredients contain one of these keywords:
+	// some wines are only called a wine there ("Vin agréé par la marque…").
 	ExcludeOptions []string `json:"excludeOptions"`
 	Flags          []Flag   `json:"flags"`
 }

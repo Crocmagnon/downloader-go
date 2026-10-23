@@ -4,13 +4,13 @@ import (
 	"strings"
 )
 
-// Annotate drops the options matching cfg.ExcludeOptions (name or label) and sets
+// Annotate drops the options matching cfg.ExcludeOptions (name, label or ingredients) and sets
 // the Flags of every remaining item from its ingredients.
 func Annotate(p Page, cfg Config) Page {
 	items := make([]Item, 0, len(p.Items))
 
 	for _, it := range p.Items {
-		if it.Option && match(it.Name+" "+it.Label, cfg.ExcludeOptions) != "" {
+		if it.Option && match(it.Name+" "+it.Label+" "+it.Ingredients, cfg.ExcludeOptions) != "" {
 			continue
 		}
 
