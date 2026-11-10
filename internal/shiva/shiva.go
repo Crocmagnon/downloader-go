@@ -32,7 +32,7 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("going to: %w", err)
 	}
 
-	if err := page.WaitForURL("https://connect.shiva.fr/Account/Login?*", playwright.PageWaitForURLOptions{Timeout: playwright.Float(5000)}); err != nil {
+	if err := page.WaitForURL("https://login.shiva.fr/login?*", playwright.PageWaitForURLOptions{Timeout: playwright.Float(5000)}); err != nil {
 		if page.URL() == "https://portail.shiva.fr/clients" {
 			return nil // already logged in
 		}
@@ -40,19 +40,24 @@ func login(page playwright.Page, identifier, password string) error {
 		return fmt.Errorf("waiting for redirect to login page: %w", err)
 	}
 
-	if err := page.Locator("#identifiantCtrl").Fill(identifier); err != nil {
+	// The default login mode sends a one-time code by email.
+	if err := page.GetByText("Me connecter avec mon mot de passe").Click(); err != nil {
+		return fmt.Errorf("switching to password login: %w", err)
+	}
+
+	if err := page.Locator("#username").Fill(identifier); err != nil {
 		return fmt.Errorf("typing identifier: %w", err)
 	}
 
-	if err := page.Locator("#motDePasseCtrl").Fill(password); err != nil {
+	if err := page.Locator("#password").Fill(password); err != nil {
 		return fmt.Errorf("typing password: %w", err)
 	}
 
-	if err := page.Locator("#connexion").Click(); err != nil {
+	if err := page.Locator("form button[type=submit]").Click(); err != nil {
 		return fmt.Errorf("clicking login button: %w", err)
 	}
 
-	if err := page.WaitForURL("https://portail.shiva.fr/clients", playwright.PageWaitForURLOptions{Timeout: playwright.Float(5000)}); err != nil {
+	if err := page.WaitForURL("https://portail.shiva.fr/clients", playwright.PageWaitForURLOptions{Timeout: playwright.Float(15000)}); err != nil {
 		return fmt.Errorf("waiting for redirect: %w", err)
 	}
 
