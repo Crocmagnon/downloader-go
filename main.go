@@ -17,7 +17,7 @@ import (
 	"github.com/Crocmagnon/downloader-go/internal/photos"
 	"github.com/Crocmagnon/downloader-go/internal/recettescabas"
 	"github.com/Crocmagnon/downloader-go/internal/shiva"
-	"github.com/Crocmagnon/downloader-go/internal/zeplug"
+	"github.com/Crocmagnon/downloader-go/internal/tohmo"
 	"github.com/alecthomas/kong"
 )
 
@@ -117,17 +117,17 @@ func (r *PhotosCmd) Run(ctx *Context) error {
 	return photos.Run(os.Stdout, os.Stderr, ctx.Headless, r.URL, ctx.OutputDir)
 }
 
-type ZeplugCmd struct {
-	Username string `required:"" short:"u" help:"Zeplug username"`
-	Password string `required:"" short:"p" help:"Zeplug password"`
+type TohmoCmd struct {
+	Username string `required:"" short:"u" help:"Tohmo username"`
+	Password string `required:"" short:"p" help:"Tohmo password"`
 }
 
-func (r *ZeplugCmd) Run(ctx *Context) error {
+func (r *TohmoCmd) Run(ctx *Context) error {
 	if err := requireOutputDir(ctx); err != nil {
 		return err
 	}
-	fmt.Println("Running Zeplug...")
-	return zeplug.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
+	fmt.Println("Running Tohmo...")
+	return tohmo.Run(os.Stdout, os.Stderr, ctx.Headless, r.Username, r.Password, ctx.OutputDir)
 }
 
 type RecettesCabasServeCmd struct {
@@ -203,7 +203,7 @@ type Cli struct {
 	OctopusEnergyAddress OctopusEnergyAddressCmd `cmd:"" help:"Download latest proof of address from Octopus Energy."`
 	Shiva                ShivaCmd                `cmd:"" help:"Download latest payslip from Shiva."`
 	LCLChecking          LCLCheckingCmd          `cmd:"" help:"Download latest bank statement from LCL."`
-	Zeplug               ZeplugCmd               `cmd:"" help:"Download latest invoice from Zeplug."`
+	Tohmo                TohmoCmd                `cmd:"" aliases:"zeplug" help:"Download latest invoice from Tohmo (formerly Zeplug)."`
 	RecettesCabas        RecettesCabasCmd        `cmd:"" help:"Recettes & Cabas bridge with Home Assistant."`
 	Photos               PhotosCmd               `cmd:"" help:"Download photos."`
 	Version              VersionCmd              `cmd:"" help:"Print version information."`
